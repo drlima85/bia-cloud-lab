@@ -1,359 +1,246 @@
 <div align="center">
 
-# 🤖 BIA - Bootcamp de Infraestrutura AWS
+# ☁️ BIA Cloud Lab AWS
 
-**B**ootcamp de **I**nfraestrutura **A**WS
+### Aplicação full-stack | AWS Cloud | Docker | DevOps | Agentes de IA
 
-*Projeto didático para o módulo de Agentes de IA e Multi-Agentes da Formação AWS*
+Laboratório prático de desenvolvimento, containerização e implantação de aplicações na AWS, baseado no projeto **BIA da Formação AWS**, com personalizações e experimentos de arquitetura, segurança, automação e operação em nuvem.
 
-[![Version](https://img.shields.io/badge/version-4.2.0-blue.svg?style=for-the-badge)](https://github.com/henrylle/bia)
-[![Node](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen.svg?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org)
-[![Docker](https://img.shields.io/badge/docker-enabled-2496ED.svg?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
-[![AWS](https://img.shields.io/badge/AWS-ECS%20%7C%20RDS%20%7C%20ECR-orange.svg?style=for-the-badge&logo=amazon-aws&logoColor=white)](https://aws.amazon.com/)
-[![License](https://img.shields.io/badge/license-ISC-green.svg?style=for-the-badge)](LICENSE)
+![AWS](https://img.shields.io/badge/AWS-ECS%20%7C%20ECR%20%7C%20RDS-232F3E?style=for-the-badge&logo=amazonaws&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+![Node.js](https://img.shields.io/badge/Node.js-22-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
+![React](https://img.shields.io/badge/React-Vite-61DAFB?style=for-the-badge&logo=react&logoColor=black)
 
-[Começar](#-começando) •
-[Documentação](#-documentação-adicional) •
-[API](#-api-endpoints) •
-[Deploy](#-deploy-na-aws) •
-[Contribuir](#-contribuindo)
+[Visão geral](#-visão-geral) · [Arquitetura](#-arquitetura) · [Execução local](#-execução-local) · [AWS](#-infraestrutura-aws) · [Agentes](#-agentes-de-ia) · [Créditos](#-créditos)
 
 </div>
 
 ---
 
-## 📚 Sobre o Projeto
+## 🎯 Visão geral
 
-**BIA** é uma aplicação full-stack desenvolvida como base prática para o módulo de **Agentes de IA e Multi-Agentes** da **Formação AWS**. O projeto demonstra a integração de tecnologias modernas de frontend e backend com infraestrutura AWS, seguindo boas práticas de DevOps e arquitetura cloud-native.
+O **BIA Cloud Lab AWS** é um laboratório de aprendizado aplicado, construído a partir do projeto BIA da **Formação AWS**, para praticar o ciclo de vida de uma aplicação web: desenvolvimento, testes, empacotamento em contêiner, publicação de imagens e implantação na AWS.
 
-<div align="center">
+O objetivo é exercitar decisões técnicas que aparecem em ambientes corporativos: conectividade entre serviços, configuração segura, observabilidade, automação de entregas e controle de custos.
 
-### ✨ Destaques
+### Escopo do laboratório
 
-</div>
+| Área | Tecnologias e práticas |
+| --- | --- |
+| Frontend | React, Vite e componentes de interface |
+| Backend | Node.js, Express e API REST |
+| Dados | PostgreSQL e Sequelize |
+| Contêineres | Docker e Docker Compose |
+| AWS | Amazon ECR, Amazon ECS com EC2, Application Load Balancer e Amazon RDS |
+| Automação | Scripts Shell, AWS CLI e workflow de testes com GitHub Actions |
+| Agentes de IA | Agentes PO, Dev, DevOps e QA organizados em `.kiro/` |
 
-<table>
-<tr>
-<td width="50%">
+> **Nota de escopo:** o repositório contém código e configurações do laboratório. A existência de scripts ou arquivos de configuração não significa, por si só, que todos os serviços e pipelines estejam implantados ou ativos. O status de cada etapa deve ser documentado conforme a validação prática.
 
-**🎯 Objetivos Pedagógicos**
-- Aplicação full-stack containerizada
-- Deploy em AWS ECS
-- CI/CD com CodePipeline
-- Infraestrutura como código
-- Workflow multi-agente IA
+## 🧩 Personalizações e aprendizados
 
-</td>
-<td width="50%">
+Este repositório representa uma evolução prática do material de estudo, incluindo:
 
-**🚀 Tecnologias Core**
-- React 18 + Vite
-- Node.js + Express
-- PostgreSQL + Sequelize
-- Docker + Docker Compose
-- AWS Cloud Services
+- Personalização da interface React e componentes de visualização de versão e ambiente.
+- Ajustes no build da aplicação com **Node.js 22**, React e Vite em imagem Docker.
+- Preparação da aplicação para acessar a API pela **mesma origem** em que o frontend é servido, facilitando a publicação atrás de um ALB.
+- Configuração local com Docker Compose e credenciais fornecidas por variáveis de ambiente, sem versionar o arquivo `.env`.
+- Estruturação de agentes especializados para organização de tarefas, desenvolvimento, DevOps e testes.
+- Preparação de imagem para publicação no **Amazon ECR** e estudos de implantação no **Amazon ECS**.
 
-</td>
-</tr>
-</table>
-
----
+Essas atividades são parte de um laboratório em evolução, com foco em aprendizado e documentação reproduzível.
 
 ## 🏗️ Arquitetura
 
-### Stack Tecnológico
+### Visão conceitual do ambiente AWS
 
-#### Backend
-- **Runtime:** Node.js (v18+)
-- **Framework:** Express.js 4.17
-- **Database:** PostgreSQL 17.1 com Sequelize ORM
-- **AWS SDK:** Integração com Secrets Manager e STS
+```mermaid
+flowchart TD
+    U[Usuário / navegador] --> ALB[Application Load Balancer]
+    ALB --> ECS[Amazon ECS - aplicação Node.js + React]
+    ECS --> RDS[(Amazon RDS PostgreSQL)]
+    ECR[Amazon ECR - imagem Docker] -.-> ECS
+    GH[GitHub - código-fonte] --> BUILD[Build e publicação da imagem]
+    BUILD --> ECR
+```
 
-#### Frontend
-- **Framework:** React 18.3
-- **Build Tool:** Vite 5.4
-- **Styling:** Tailwind CSS 4.3
-- **Bibliotecas:** React Router, Recharts, Lucide Icons
+O diagrama representa o **desenho-alvo do laboratório**, não uma comprovação de que todos os componentes estejam ativos neste momento.
 
-#### Infraestrutura
-- **Containerização:** Docker + Docker Compose
-- **Cloud Provider:** AWS (ECS, RDS, ECR, CodePipeline)
-- **CI/CD:** AWS CodeBuild + GitHub Actions
+### Componentes
 
----
+- **React + Vite:** interface web, compilada durante o build da imagem.
+- **Node.js + Express:** backend e disponibilização dos arquivos estáticos.
+- **PostgreSQL:** persistência de dados da aplicação.
+- **Amazon ECR:** armazenamento privado das imagens Docker.
+- **Amazon ECS (EC2):** execução dos contêineres na AWS.
+- **Application Load Balancer:** entrada HTTP e distribuição do tráfego.
+- **Amazon RDS:** banco de dados gerenciado.
 
-## 🚀 Começando
+Consulte também o [diagrama de arquitetura existente](docs/architecture/aws-ecs-diagram.html).
+
+## 🗂️ Estrutura do repositório
+
+```text
+bia-cloud-lab/
+├── .github/workflows/       # Automação de testes
+├── .kiro/
+│   ├── agents/              # Agentes PO, Dev, DevOps e QA
+│   ├── docs/                # Documentação de workflows
+│   ├── rules/               # Regras do projeto
+│   └── tasks/               # Histórico e gestão de tarefas
+├── api/                     # Controllers, models e routes
+├── client/                  # Aplicação React + Vite
+├── config/                  # Configuração do backend
+├── database/                # Migrações
+├── docs/                    # Documentação e arquitetura
+├── scripts/                 # Scripts de apoio ao laboratório
+├── tests/                   # Testes automatizados
+├── Dockerfile               # Build da imagem da aplicação
+├── compose.yml              # Ambiente local em contêineres
+├── buildspec.yml            # Configuração de build AWS
+└── server.js                # Inicialização da aplicação
+```
+
+## 💻 Execução local
 
 ### Pré-requisitos
 
-- **Node.js** >= 18.0.0
-- **Docker** e **Docker Compose**
-- **Git**
-- **AWS CLI** (para deploy em produção)
-- **curl** (para health checks)
+- Git
+- Docker Engine e Docker Compose
+- Acesso ao código-fonte deste repositório
 
-### 📦 Instalação
-
-#### 1. Clone o repositório
+### 1. Clonar
 
 ```bash
-git clone https://github.com/henrylle/bia.git
-cd bia
+git clone https://github.com/drlima85/bia-cloud-lab.git
+cd bia-cloud-lab
 ```
 
-#### 2. Instale as dependências
+### 2. Configurar as variáveis de ambiente
+
+O arquivo `compose.yml` utiliza a variável `DB_PASSWORD`. Crie um arquivo `.env` **local**, na raiz do projeto:
+
+```dotenv
+DB_PASSWORD=defina-uma-senha-forte-aqui
+```
+
+> O arquivo `.env` está no `.gitignore` e **não deve ser enviado ao GitHub**. Não use senhas reais de ambientes corporativos neste laboratório.
+
+### 3. Construir e iniciar os contêineres
 
 ```bash
-# Backend
-npm install
-
-# Frontend
-cd client
-npm install
-cd ..
+docker compose up -d --build
 ```
 
-#### 3. Configure as variáveis de ambiente
-
-O arquivo `compose.yml` já está configurado para desenvolvimento local com valores padrão.
-
----
-
-## 🐳 Executando com Docker
-
-### Iniciar a aplicação completa
+Para acompanhar a inicialização:
 
 ```bash
-docker compose up -d
+docker compose ps
+docker compose logs -f
 ```
 
-Isso irá iniciar:
-- **Backend:** http://localhost:3001
-- **Database:** PostgreSQL na porta 5433
-- **Frontend:** Servido pelo backend na porta 3001
+**Portas e acesso:** consulte o mapeamento atual em `compose.yml`. No ambiente de laboratório personalizado, a aplicação foi utilizada na porta **3002**; confirme o mapeamento antes de acessar `http://localhost:3002`.
 
-### Rebuild da aplicação
-
-```bash
-docker compose down
-docker compose build server
-docker compose up -d
-```
-
-### Verificar logs
-
-```bash
-docker compose logs -f server
-```
-
-### Parar a aplicação
+### 4. Encerrar sem apagar os dados
 
 ```bash
 docker compose down
 ```
 
----
+**Atenção:** não utilize `docker compose down -v` se quiser preservar os dados persistidos nos volumes.
 
-## 🔍 Health Check
+## ☁️ Infraestrutura AWS
 
-Verifique se a aplicação está funcionando:
+O laboratório contempla estudos e configurações para:
 
-```bash
-curl -s http://localhost:3001/api/versao
-```
+1. **Amazon ECR:** criação de repositório privado, autenticação do Docker e versionamento de imagens.
+2. **Amazon ECS com EC2:** definição de tarefas, serviços e execução da aplicação em contêineres.
+3. **Application Load Balancer:** roteamento de requisições para a aplicação.
+4. **Amazon RDS PostgreSQL:** persistência dos dados e conectividade com a aplicação.
+5. **IAM, redes e Security Groups:** controle de permissões e acesso entre componentes.
 
-Resposta esperada:
-```json
-{
-  "versao": "4.2.0"
-}
-```
+### Publicação da imagem no ECR
 
----
+O processo de build e publicação é realizado separadamente da publicação do código no GitHub. A imagem Docker do laboratório foi preparada com a tag `4.0.0`; a publicação no ECR e a implantação no ECS devem ser confirmadas antes de marcar a entrega como concluída.
 
-## 📁 Estrutura do Projeto
+### Boas práticas de segurança
 
-```
-bia/
-├── .github/              # GitHub Actions workflows
-├── .kiro/                # Sistema multi-agente
-│   ├── agents/           # Configuração dos agentes (PO, Dev, DevOps, QA)
-│   ├── docs/             # Documentação do worktree workflow
-│   ├── rules/            # Regras de infraestrutura, Dockerfile e pipeline
-│   ├── tasks/            # Gerenciamento de tarefas
-│   └── worktrees/        # Worktrees isolados por feature
-├── api/                  # Backend API
-│   ├── controllers/      # Lógica de controle
-│   ├── routes/           # Definição de rotas
-│   ├── models/           # Modelos do Sequelize
-│   └── data/             # Dados mockados
-├── client/               # Frontend React
-│   ├── src/
-│   │   ├── components/   # Componentes React
-│   │   ├── styles/       # Estilos CSS
-│   │   └── lib/          # Utilitários
-│   └── public/           # Assets estáticos
-├── config/               # Configurações da aplicação
-├── database/             # Migrations do Sequelize
-├── docs/                 # Documentação adicional
-├── scripts/              # Scripts auxiliares
-├── tests/                # Testes unitários
-├── buildspec.yml         # AWS CodeBuild configuration
-├── compose.yml           # Docker Compose configuration
-├── Dockerfile            # Container image definition
-└── server.js             # Entry point da aplicação
-```
+- Não versionar `.env`, chaves privadas ou arquivos locais de credenciais.
+- Preferir identidades e permissões mínimas necessárias para automações.
+- Evitar imprimir senhas ou segredos nos logs.
+- Restringir o acesso ao banco de dados e validar regras de rede.
+- Revisar custos e desligar recursos de laboratório quando não estiverem em uso.
 
----
+## 🤖 Agentes de IA
 
-## 🛠️ Sistema Multi-Agente
+A pasta `.kiro/` organiza o trabalho de agentes especializados:
 
-O projeto BIA utiliza um sistema de gerenciamento de tarefas através de **agentes de IA**:
+| Agente | Responsabilidade principal |
+| --- | --- |
+| **PO** | Especificação, priorização e acompanhamento de tarefas |
+| **Dev** | Desenvolvimento e manutenção da aplicação |
+| **DevOps** | Contêineres, infraestrutura, automação e deploy |
+| **QA** | Planejamento e execução de testes |
 
-### Agentes Disponíveis
+O projeto também contém documentação de **Git worktrees**, branches de feature e fluxo de tarefas. Veja [workflow de worktrees](.kiro/docs/worktree-workflow.md) e [regras de infraestrutura](.kiro/rules/infraestrutura.md).
 
-| Agente | Responsabilidade |
-|--------|------------------|
-| **PO** | Criação de tasks, revisão e abertura de PRs |
-| **Dev** | Implementação de features (frontend e backend) |
-| **DevOps** | Infraestrutura, pipeline e deploy |
-| **QA** | Garantia de qualidade e testes |
+## 🧪 Testes e API
 
-### Workflow de Worktree
+Os testes unitários estão organizados em `tests/unit/`, e há um workflow de GitHub Actions em `.github/workflows/testes-pr.yml`.
 
-O projeto adota o padrão **feature/branch com worktrees isolados**:
-
-1. Cada task possui seu próprio branch e worktree
-2. Todos os branches derivam de `ia-main`
-3. Worktrees ficam em `.kiro/worktrees/`
-4. Tasks são gerenciadas em `.kiro/tasks/` (todo → doing → done)
-
-Para mais detalhes, consulte:
-- [Worktree Workflow](.kiro/docs/worktree-workflow.md)
-- [Worktree Steering](.kiro/docs/worktree-steering.md)
-
----
-
-## 🏗️ Deploy na AWS
-
-### Infraestrutura
-
-O projeto utiliza:
-- **ECS Cluster** com instâncias EC2 (t3.micro)
-- **RDS PostgreSQL** (t3.micro)
-- **ECR** para registry de imagens
-- **CodePipeline** + **CodeBuild** para CI/CD
-
-### Nomenclatura de Recursos
-
-Todos os recursos seguem o prefixo `bia`:
-
-```
-cluster-bia           # ECS Cluster (sem ALB)
-cluster-bia-alb       # ECS Cluster (com ALB)
-task-def-bia          # Task Definition
-service-bia           # ECS Service
-bia-db                # Security Group do RDS
-bia-web               # Security Group do EC2 (sem ALB)
-bia-ec2               # Security Group do EC2 (com ALB)
-bia-alb               # Security Group do ALB
-```
-
-### Script de Deploy
+Para verificar os comandos de teste disponíveis:
 
 ```bash
-./deploy-ecs.sh
+npm run
 ```
 
-Para regras detalhadas de infraestrutura, consulte:
-- [Regras de Infraestrutura](.kiro/rules/infraestrutura.md)
-- [Regras de Pipeline](.kiro/rules/pipeline.md)
+### Endpoints documentados
 
----
+| Método | Rota | Finalidade |
+| --- | --- | --- |
+| GET | `/api/ping` | Verificação de disponibilidade |
+| GET | `/api/versao` | Informações da versão |
+| GET | `/api/tarefas` | Listar tarefas |
+| GET | `/api/tarefas/:id` | Consultar tarefa |
+| POST | `/api/tarefas` | Criar tarefa |
+| PUT | `/api/tarefas/:id` | Atualizar tarefa |
+| DELETE | `/api/tarefas/:id` | Remover tarefa |
 
-## 🧪 Testes
+> As rotas acima seguem a documentação do projeto. Consulte `api/routes/` para confirmar o contrato e o comportamento de cada endpoint.
 
-### Executar testes unitários
+## 📸 Evidências do laboratório
 
-```bash
-npm test
-```
+Esta seção será atualizada com evidências verificáveis, como:
 
-### Estrutura de Testes
+- Capturas da interface personalizada.
+- Diagrama final da arquitetura AWS.
+- Build da imagem Docker e publicação no ECR.
+- Execução do serviço ECS e validação do acesso pelo ALB.
+- Resultados dos testes automatizados.
 
-```
-tests/
-└── unit/
-    └── controllers/
-```
+## 🗺️ Próximas etapas
 
----
+- [x] Personalizar a aplicação e preparar o Dockerfile.
+- [x] Organizar o código-fonte em repositório Git.
+- [x] Preparar a configuração do Amazon ECR.
+- [ ] Confirmar a publicação da imagem no ECR.
+- [ ] Validar a aplicação no ECS por meio do ALB.
+- [ ] Adicionar evidências e capturas de tela.
+- [ ] Revisar e documentar o pipeline de entrega de ponta a ponta.
 
-## 📝 API Endpoints
+## 📚 Créditos
 
-### Versão
-```
-GET /api/versao
-```
+Este laboratório é **baseado no projeto BIA**, utilizado na **Formação AWS**, de Henrylle Maia.
 
-### Tarefas
-```
-GET    /api/tarefas       # Listar todas as tarefas
-GET    /api/tarefas/:id   # Buscar tarefa por ID
-POST   /api/tarefas       # Criar nova tarefa
-PUT    /api/tarefas/:id   # Atualizar tarefa
-DELETE /api/tarefas/:id   # Deletar tarefa
-```
+- **Projeto original:** [henrylle/bia](https://github.com/henrylle/bia)
+- **Adaptações e laboratório pessoal:** [drlima85/bia-cloud-lab](https://github.com/drlima85/bia-cloud-lab)
 
-### Health Check
-```
-GET /api/ping
-```
-
----
-
-## 🤝 Contribuindo
-
-Este é um projeto didático. Para contribuir:
-
-1. Crie uma task seguindo o template em `.kiro/docs/task-template-with-worktree.md`
-2. Siga o workflow de worktree documentado
-3. Implemente seguindo as regras em `.kiro/rules/`
-4. Abra PR contra `ia-main`
-
----
-
-## 📖 Documentação Adicional
-
-- [Arquitetura AWS ECS](docs/architecture/aws-ecs-diagram.html)
-- [Regras de Dockerfile](.kiro/rules/dockerfile.md)
-- [Task Template](.kiro/docs/task-template-with-worktree.md)
-
----
-
-## 📧 Suporte
-
-Para dúvidas sobre o curso:
-- Acesse a **área de membros** da Formação AWS
-- Utilize o **app do aluno** para acompanhamento
-
----
-
-## 📄 Licença
-
-Este projeto está sob a licença ISC. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
-
----
-
-## 🎓 Sobre a Formação AWS
-
-**Curso:** Formação AWS  
-**Módulo:** Agentes de IA e Multi Agentic  
-**Versão do Projeto:** 4.2.0
+O repositório tem finalidade educacional e de portfólio. Os créditos ao material de origem são preservados; eventuais condições de licenciamento do projeto original devem ser verificadas antes de redistribuição ou reutilização fora desse contexto.
 
 ---
 
 <div align="center">
-  <sub>Desenvolvido com ❤️ para fins educacionais</sub>
-</div>
 
+**BIA Cloud Lab AWS** · Aprendizado prático em Cloud, DevOps e automação
+
+</div>
