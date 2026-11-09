@@ -62,3 +62,17 @@ credentials
 
 # Configuracao local do MCP PostgreSQL
 .kiro/mcp-db.json
+
+# Desafio 5 - N8N (Arquivos operacionais e confidenciais locais)
+n8n-lab/.env
+n8n-lab/HISTORICO-SESSAO.md
+n8n-lab/iam/
+n8n-lab/*.operational.*
+n8n-lab/n8n-ha-single-mode.md
+n8n-lab/*.bak
+/backups/
+/.agents/
+.kiro/agents/n8n.json
+/docs/README-acesso.md
+/docs/acesso.md
+/docs/resumo-n8n.md

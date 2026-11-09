@@ -1,0 +1,19 @@
+# ==========================================
+# Desafio 5 - N8N: Arquivos Locais Operacionais
+# ==========================================
+
+# Credenciais e segredos locais
+.env
+
+# Histórico e logs locais de sessão
+HISTORICO-SESSAO.md
+
+# Políticas IAM operacionais originais
+iam/
+
+# Cópias operacionais locais com dados reais de ambiente
+*.operational.*
+n8n-ha-single-mode.md
+
+# Backups locais
+*.bak
