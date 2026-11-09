@@ -1,218 +1,109 @@
-# IAM — Guia de Acesso: Desafio 5 N8N na AWS
+# Governança e Segurança IAM — Desafio 5: N8N na AWS
 
-**Conta:** <AWS_ACCOUNT_ID> | **Região:** us-east-2  
-**Referência:** `n8n-lab/n8n-ha-single-mode.md` (v1.3)
+**Projeto:** BIA Cloud Lab AWS  
+**Módulo:** Desafio 5 — N8N em Produção  
+**Região:** `us-east-2` (Ohio)  
+**Conta:** `<AWS_ACCOUNT_ID>`  
+**Referência Arquitetural:** [`n8n-ha-single-mode-v2.1.md`](../n8n-ha-single-mode-v2.1.md)  
+**Guia Operacional Passo a Passo:** [`README-acesso.md`](README-acesso.md)  
 
 ---
 
-## 1. Arquivos gerados
+## 1. Visão Geral de Governança e Escopo de Acesso
 
-Todos os arquivos estão em `n8n-lab/iam/`:
+A modelagem de identidades e acessos (IAM) do Desafio 5 foi estruturada com foco em **menor privilégio**, **segregação de responsabilidades** e **proteção aos recursos preexistentes da aplicação BIA Cloud Lab**.
 
-| Arquivo | Tipo | Finalidade |
+> [!NOTE]
+> **Artefatos Operacionais Locais:**  
+> Os arquivos JSON com as definições de políticas e trust policies referenciados neste documento residem exclusivamente no diretório local `n8n-lab/iam/` para provisionamento do ambiente e **não são versionados no repositório público do GitHub**, garantindo que definições operacionais detalhadas não componham a superfície pública do projeto. Para os comandos de criação e limpeza, consulte o [`README-acesso.md`](README-acesso.md).
+
+---
+
+## 2. Arquitetura de Identidades e Roles
+
+A solução implementa três identidades principais, cada uma com escopo restrito às suas funções no ciclo de vida da infraestrutura:
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                        Identidades do Desafio 5                        │
+├──────────────────────────┬─────────────────────────┬───────────────────┤
+│    Usuário n8n-lab       │   Execution Role (Task) │   Instance Role   │
+│                          │                         │                   │
+│ • Deploy transitório     │ • ecs-tasks.amazonaws   │ • ec2.amazonaws   │
+│ • Pré-validação RO       │ • Leitura SSM (/n8n/*)  │ • ECS Agent EC2   │
+│ • Desanexado pós-deploy  │ • CloudWatch Logs       │ • SSM Session Mgr │
+└──────────────────────────┴─────────────────────────┴───────────────────┘
+```
+
+### 2.1 Role de Execução do Container (`n8n-task-execution-role`)
+* **Entidade Confiável (Trust Policy):** `ecs-tasks.amazonaws.com`.
+* **Propósito:** Utilizada estritamente pelo ECS Agent no plano de controle do host EC2 durante o ciclo de bootstrapping da Task.
+* **Escopo de Acesso (Inline Policy `n8n-execution-policy`):**
+  * `ssm:GetParameters` nos parâmetros restritos:
+    * `arn:aws:ssm:us-east-2:<AWS_ACCOUNT_ID>:parameter/n8n/db_password`
+    * `arn:aws:ssm:us-east-2:<AWS_ACCOUNT_ID>:parameter/n8n/encryption_key`
+  * Criação de log stream e entrega de eventos de log no Log Group `arn:aws:logs:us-east-2:<AWS_ACCOUNT_ID>:log-group:/ecs/n8n-ec2:*`.
+* **Princípio de Menor Privilégio em Runtime:** O container N8N em execução opera em modo `bridge` e **não recebe uma Task Role**. Ele não possui credenciais AWS injetadas em runtime, impedindo que fluxos de trabalho ou automações executem chamadas à AWS API sem credenciais explicitamente configuradas no editor de nós do N8N.
+
+### 2.2 Role da Instância EC2 (`n8n-ec2-instance-role`) & Instance Profile
+* **Entidade Confiável (Trust Policy):** `ec2.amazonaws.com`.
+* **Instance Profile:** `n8n-ec2-instance-profile`.
+* **Políticas Gerenciadas AWS Anexadas:**
+  1. `AmazonEC2ContainerServiceforEC2Role`: Concede permissões essenciais para que o daemon do ECS Agent registre a instância EC2 no cluster `cluster-n8n-d2n` e coordene o ciclo de vida dos containers.
+  2. `AmazonSSMManagedInstanceCore`: Permite o gerenciamento e acesso seguro à instância através do **AWS Systems Manager Session Manager**, eliminando a necessidade de abrir portas SSH (TCP 22) ou associar Key Pairs às máquinas.
+
+### 2.3 Usuário de Automação e Deploy (`n8n-lab`)
+* **Políticas Gerenciadas Associadas:**
+  * `N8N-Lab-Infrastructure-ReadOnly`: Auditoria contínua de infraestrutura (mantida).
+  * `N8N-Lab-PreValidation-ReadOnly`: Verificações prévias de dependências (AMIs, VPC, Subnets).
+  * `N8N-Lab-Deploy`: Política de provisionamento e limpeza com ações de escrita. Conforme as diretrizes de governança, **esta política possui caráter estritamente temporário e deve ser desanexada imediatamente após a conclusão do ciclo de vida do ambiente**.
+
+---
+
+## 3. Análise Crítica e Justificativas para `Resource: "*"`
+
+O modelo de menor privilégio impõe que recursos específicos sejam delimitados por ARN sempre que tecnicamente possível. Onde a AWS API não suporta especificação granular no momento da emissão da chamada, o uso do curinga `*` foi documentado e justificado:
+
+| Ação IAM | Motivo Técnico da Inviabilidade de ARN Específico | Mitigação Implementada |
 |---|---|---|
-| `01-policy-prevalidation-readonly.json` | Política gerenciada | Permissões de leitura para pré-validação. Anexar ao **usuário** `n8n-lab` antes de iniciar. |
-| `02-policy-deploy.json` | Política gerenciada | Permissões de escrita para implantação e limpeza. Anexar ao **usuário** `n8n-lab` somente durante o deploy. **Remover depois.** |
-| `03-trust-policy-ecs-tasks.json` | Trust policy | Permite que `ecs-tasks.amazonaws.com` assuma a `n8n-task-execution-role`. |
-| `04-inline-policy-execution-role.json` | Política inline | Permissões da `n8n-task-execution-role`: SSM secrets + CloudWatch Logs. |
-| `05-trust-policy-ec2.json` | Trust policy | Permite que `ec2.amazonaws.com` assuma a `n8n-ec2-instance-role`. |
-| `06-instance-role-managed-policies.json` | Guia de referência | ARNs das duas managed policies a anexar à `n8n-ec2-instance-role`. |
-| `07-instance-profile.json` | Guia de referência | Comandos para criar o instance profile e associá-lo à role EC2. |
+| `ec2:RunInstances`, `ec2:CreateSecurityGroup` | As operações de criação do EC2 não aceitam ARN de recursos que ainda não foram gerados no momento da chamada. | Escopo de deploy restrito à região `us-east-2` e tags de governança obrigatórias. |
+| `ecs:CreateCluster`, `ecs:CreateService` | A API do ECS não filtra operações `Create` por ARN específico de cluster na versão utilizada. | Nomenclatura padronizada sob o namespace `n8n-*`. |
+| `elasticloadbalancing:Create*` | ARNs do ALB, Target Group e Listener contêm identificadores e hashes gerados em tempo de execução. | Permissões de escrita contidas na política temporária de deploy. |
+| `autoscaling:CreateAutoScalingGroup` | O identificador do ASG inclui sufixos gerados dinamicamente. | Configuração restrita ao Launch Template `lt-n8n-d2n`. |
+| `rds:Describe*` de Catálogo | APIs de consulta a versões de engine (`DescribeDBEngineVersions`) e tipos de instância são serviços de catálogo globais. | Operações estritamente de leitura (Read-Only). |
+
+### Restrições Granulares Efetivamente Aplicadas:
+* **Escrita RDS:** Restrita a instâncias no banco `db:n8n`.
+* **Segredos SSM:** Restrita aos caminhos exatos `/n8n/db_password` e `/n8n/encryption_key`.
+* **PassRole:** Restrita explicitamente a roles com prefixo `n8n-*`.
+* **CloudWatch Logs:** Restrita ao Log Group `/ecs/n8n-ec2*`.
 
 ---
 
-## 2. Ordem correta de criação no console IAM
+## 4. Proteção e Coexistência com o Projeto BIA Cloud Lab
 
-### Fase A — Antes de qualquer recurso AWS (pré-validação)
+O ambiente do Desafio 5 foi projetado para coexistir na mesma conta AWS da aplicação principal BIA Cloud Lab sem causar impactos acidentais. A governança foi estabelecida sobre os seguintes controles técnicos reais:
 
-```
-1. Criar política gerenciada  → N8N-Lab-PreValidation-ReadOnly
-   Arquivo: 01-policy-prevalidation-readonly.json
-   Anexar a: usuário n8n-lab
-
-   (A política N8N-Lab-Infrastructure-ReadOnly já deve estar anexada
-    ao usuário desde o inventário inicial.)
-```
-
-### Fase B — No início da implantação (Fases 1–2 do plano)
-
-```
-2. Criar política gerenciada  → N8N-Lab-Deploy
-   Arquivo: 02-policy-deploy.json
-   Anexar a: usuário n8n-lab
-   ⚠️  REMOVER ao término do laboratório
-
-3. Criar role IAM             → n8n-task-execution-role
-   Trust policy: 03-trust-policy-ecs-tasks.json
-   Inline policy (nome: n8n-execution-policy): 04-inline-policy-execution-role.json
-
-4. Criar role IAM             → n8n-ec2-instance-role
-   Trust policy: 05-trust-policy-ec2.json
-   Anexar managed policies (ver 06-instance-role-managed-policies.json):
-     - arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role
-     - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
-
-5. Criar instance profile     → n8n-ec2-instance-profile
-   Associar role: n8n-ec2-instance-role
-   (ver 07-instance-profile.json)
-   ⚠️  O instance profile deve existir ANTES de criar o Launch Template
-```
+1. **Blindagem de PassRole:**
+   A política de deploy restringe a ação `iam:PassRole` a:
+   ```text
+   arn:aws:iam::<AWS_ACCOUNT_ID>:role/n8n-*
+   arn:aws:iam::<AWS_ACCOUNT_ID>:instance-profile/n8n-*
+   ```
+   Isso garante que o usuário `n8n-lab` não consiga delegar roles com privilégios de outros projetos (como a `ecsTaskExecutionRole` do BIA) para serviços ou instâncias.
+2. **Segregação de Segurança em Rede:**
+   Security Groups dedicados (`n8n-alb`, `n8n-ec2`, `n8n-db`) isolados dos Security Groups da BIA, sem regras de compartilhamento de tráfego entre os dois ecossistemas.
+3. **Ponto de Atenção — Route 53 Compartilhado:**
+   A zona DNS `bia.d2ns.com.br` (`Z0200626TQFMAZ5GPD92`) é compartilhada. A política concedeu `route53:ChangeResourceRecordSets` na hosted zone. A proteção dos registros preexistentes do BIA foi assegurada por **isolamento de apontamento** (criação exclusiva do subdomínio `n8n.bia.d2ns.com.br`). Em ambientes corporativos de produção, a recomendação é a criação de uma subzona delegada exclusiva para automações.
 
 ---
 
-## 3. Quem anexa o quê
+## 5. Referências de Identidades
 
-### Usuário `n8n-lab`
-
-| Política | Quando anexar | Quando remover |
+| Identificador | Tipo | Finalidade Principal |
 |---|---|---|
-| `N8N-Lab-Infrastructure-ReadOnly` | Já aplicada (inventário) | Manter — usada para monitoramento contínuo |
-| `N8N-Lab-PreValidation-ReadOnly` | Antes do deploy | Opcional — pode manter para diagnóstico |
-| `N8N-Lab-Deploy` | Início do deploy | **Remover após limpeza final** |
-
-### Role `n8n-task-execution-role`
-
-| Política | Tipo | Descrição |
-|---|---|---|
-| `n8n-execution-policy` | Inline | SSM GetParameters + CloudWatch Logs para /ecs/n8n-ec2 |
-
-### Role `n8n-ec2-instance-role`
-
-| Política | Tipo | ARN |
-|---|---|---|
-| `AmazonEC2ContainerServiceforEC2Role` | Managed (AWS) | `arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role` |
-| `AmazonSSMManagedInstanceCore` | Managed (AWS) | `arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore` |
-
----
-
-## 4. Permissões de deploy que devem ser removidas depois
-
-A política `N8N-Lab-Deploy` concede permissões de escrita amplas e **deve ser desanexada do usuário `n8n-lab` após a conclusão do laboratório**. Ela é necessária apenas durante as fases ativas de implantação e limpeza.
-
-Motivo: inclui ações destrutivas como `rds:DeleteDBInstance`, `ecs:DeleteCluster`, `ec2:TerminateInstances`, `autoscaling:DeleteAutoScalingGroup` e `iam:DeleteRole`.
-
----
-
-## 5. Ações que exigem `Resource: "*"` e por quê
-
-| Ação | Motivo do `*` |
-|---|---|
-| `ssm:DescribeParameters` | A API SSM não aceita ARN de parâmetro específico como resource nesta operação |
-| `ec2:Describe*` em geral | Todas as operações Describe do EC2 ignoram o resource e exigem `*` pela arquitetura da API |
-| `ecs:ListContainerInstances`, `ecs:ListTasks`, `ecs:Describe*` | A API ECS aceita `*` mas não filtra por ARN de cluster nessas operações |
-| `rds:DescribeOrderableDBInstanceOptions`, `DescribeDBEngineVersions`, `DescribeDBSubnetGroups` | APIs de catálogo RDS — não operam sobre recursos específicos |
-| `elasticloadbalancing:Create*`, `Delete*` | ALB/TG/Listener ARNs não são conhecidos antes da criação |
-| `autoscaling:Create*`, `Delete*` | ARN do ASG inclui GUID gerado automaticamente |
-| `logs:DescribeLogGroups` | Log group ainda não existe no momento da pré-validação |
-
----
-
-## 6. Dependências e restrições IAM
-
-### Dependências de criação (ordem obrigatória)
-
-```
-n8n-task-execution-role  ← deve existir antes de registrar a Task Definition
-n8n-ec2-instance-role    ← deve existir antes de criar o Instance Profile
-n8n-ec2-instance-profile ← deve existir antes de criar o Launch Template
-Launch Template          ← deve existir antes de criar o Auto Scaling Group
-Auto Scaling Group       ← deve existir antes de criar o Capacity Provider
-```
-
-### Restrição de `iam:PassRole`
-
-A política `N8N-Lab-Deploy` concede `iam:PassRole` restrito a:
-```
-arn:aws:iam::<AWS_ACCOUNT_ID>:role/n8n-*
-arn:aws:iam::<AWS_ACCOUNT_ID>:instance-profile/n8n-*
-```
-
-Isso significa que o usuário `n8n-lab` **não pode passar** nenhuma role fora do prefixo `n8n-*` para serviços AWS — incluindo a `ecsTaskExecutionRole` do BIA Cloud Lab. Isso é intencional e protege os recursos existentes.
-
-### Proteção ao BIA Cloud Lab
-
-Nenhuma política criada para o Desafio 5 concede acesso a:
-- `ecsTaskExecutionRole` (role do BIA)
-- `cluster-bia-app` (cluster ECS do BIA)
-- `bia-cloud-alb` (ALB do BIA)
-- `bia-cloud` (RDS do BIA)
-- Qualquer recurso com prefixo diferente de `n8n-*`
-
----
-
-## 7. Procedimento de limpeza IAM ao final do laboratório
-
-Executar **após** a limpeza completa dos recursos AWS (ver seção 16 do plano):
-
-```bash
-# 1. Desanexar managed policies da instance role
-aws iam detach-role-policy \
-  --role-name n8n-ec2-instance-role \
-  --policy-arn arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role \
-  --profile n8n-lab --region us-east-2
-
-aws iam detach-role-policy \
-  --role-name n8n-ec2-instance-role \
-  --policy-arn arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore \
-  --profile n8n-lab --region us-east-2
-
-# 2. Remover role do instance profile e excluir profile
-aws iam remove-role-from-instance-profile \
-  --instance-profile-name n8n-ec2-instance-profile \
-  --role-name n8n-ec2-instance-role \
-  --profile n8n-lab --region us-east-2
-
-aws iam delete-instance-profile \
-  --instance-profile-name n8n-ec2-instance-profile \
-  --profile n8n-lab --region us-east-2
-
-# 3. Excluir instance role
-aws iam delete-role \
-  --role-name n8n-ec2-instance-role \
-  --profile n8n-lab --region us-east-2
-
-# 4. Excluir inline policy da execution role
-aws iam delete-role-policy \
-  --role-name n8n-task-execution-role \
-  --policy-name n8n-execution-policy \
-  --profile n8n-lab --region us-east-2
-
-# 5. Excluir execution role
-aws iam delete-role \
-  --role-name n8n-task-execution-role \
-  --profile n8n-lab --region us-east-2
-
-# 6. Desanexar e excluir políticas gerenciadas do usuário n8n-lab
-#    (obter ARNs das políticas criadas para o projeto)
-aws iam detach-user-policy \
-  --user-name n8n-lab \
-  --policy-arn <ARN_N8N-Lab-Deploy> \
-  --profile n8n-lab --region us-east-2
-
-aws iam detach-user-policy \
-  --user-name n8n-lab \
-  --policy-arn <ARN_N8N-Lab-PreValidation-ReadOnly> \
-  --profile n8n-lab --region us-east-2
-
-aws iam delete-policy --policy-arn <ARN_N8N-Lab-Deploy>
-aws iam delete-policy --policy-arn <ARN_N8N-Lab-PreValidation-ReadOnly>
-```
-
-> Substituir `<ARN_...>` pelos ARNs reais após criação das políticas. Formato esperado:
-> `arn:aws:iam::<AWS_ACCOUNT_ID>:policy/N8N-Lab-Deploy`
-
----
-
-## 8. Referências rápidas
-
-| Recurso | ARN / Valor |
-|---|---|
-| Usuário `n8n-lab` | `arn:aws:iam::<AWS_ACCOUNT_ID>:user/n8n-lab` |
-| `n8n-task-execution-role` | `arn:aws:iam::<AWS_ACCOUNT_ID>:role/n8n-task-execution-role` |
-| `n8n-ec2-instance-role` | `arn:aws:iam::<AWS_ACCOUNT_ID>:role/n8n-ec2-instance-role` |
-| `n8n-ec2-instance-profile` | `arn:aws:iam::<AWS_ACCOUNT_ID>:instance-profile/n8n-ec2-instance-profile` |
-| KMS key `aws/ssm` | `arn:aws:kms:us-east-2:<AWS_ACCOUNT_ID>:key/88a00481-a1aa-4f0d-b686-7777144770cf` |
-| Hosted zone Route 53 | `Z0200626TQFMAZ5GPD92` |
-| SSM `/n8n/db_password` | `arn:aws:ssm:us-east-2:<AWS_ACCOUNT_ID>:parameter/n8n/db_password` |
-| SSM `/n8n/encryption_key` | `arn:aws:ssm:us-east-2:<AWS_ACCOUNT_ID>:parameter/n8n/encryption_key` |
-| Log group N8N | `arn:aws:logs:us-east-2:<AWS_ACCOUNT_ID>:log-group:/ecs/n8n-ec2` |
+| `n8n-task-execution-role` | IAM Role | Leitura de segredos SSM e entrega de logs no ECS. |
+| `n8n-ec2-instance-role` | IAM Role | Comunicação do ECS Agent e túnel via SSM Session Manager. |
+| `n8n-ec2-instance-profile` | Instance Profile | Associação da role EC2 ao Launch Template `lt-n8n-d2n`. |
+| `N8N-Lab-Deploy` | Managed Policy | Política transitória de provisionamento (revogada pós-laboratório). |
+| `N8N-Lab-PreValidation-ReadOnly` | Managed Policy | Validação de pré-requisitos antes do deploy. |
