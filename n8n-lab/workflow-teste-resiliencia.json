@@ -1,0 +1,56 @@
+{
+  "id": "WflwResiliencia1",
+  "name": "Teste Resiliencia Queue Mode",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "teste-resiliencia",
+        "responseMode": "onReceived",
+        "responseData": "firstEntryJson",
+        "options": {}
+      },
+      "id": "c1f7a0b1-4d32-47e1-8890-a5eb14392f44",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        250,
+        300
+      ],
+      "webhookId": "teste-resiliencia"
+    },
+    {
+      "parameters": {
+        "jsCode": "const start = new Date();\nconst waitTill = new Date(start.getTime() + 2000);\nwhile (waitTill > new Date()) {}\nconst end = new Date();\n\nreturn [{\n  json: {\n    job: $json.body?.job || 'controle',\n    workerProcess: 'n8n-worker',\n    startedAt: start.toISOString(),\n    completedAt: end.toISOString(),\n    durationMs: end.getTime() - start.getTime(),\n    status: 'PROCESSED_BY_WORKER'\n  }\n}];"
+      },
+      "id": "e4a2c918-7b94-4d2b-bc61-92b0c34e7f82",
+      "name": "Processamento Worker",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Processamento Worker",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true
+  }
+}

@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Desafio 6 — N8N Queue Mode na AWS | Arquitetura</title>
+    <style>
+        :root {
+            --aws-orange: #FF9900;
+            --aws-blue: #232F3E;
+            --aws-light-blue: #0073BB;
+            --aws-green: #1D8102;
+            --aws-gray: #EAEDED;
+            --shared-color: #0073BB;
+            --provisioned-color: #1D8102;
+            --pending-color: #FF9900;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+            line-height: 1.5;
+            padding: 24px;
+        }
+
+        .container {
+            max-width: 1440px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 24px 32px;
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .title-group h1 {
+            font-size: 1.8rem;
+            color: #f8fafc;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .badge-desafio {
+            background-color: #ea580c;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 9999px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .title-group p {
+            color: #94a3b8;
+            font-size: 0.95rem;
+            margin-top: 4px;
+        }
+
+        .meta-info {
+            display: flex;
+            gap: 16px;
+            font-size: 0.85rem;
+        }
+
+        .meta-card {
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 8px 14px;
+        }
+
+        .meta-label {
+            color: #64748b;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .meta-val {
+            color: #38bdf8;
+            font-weight: 600;
+        }
+
+        /* Legenda de Status */
+        .legend-card {
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 16px 24px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .legend-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+        }
+
+        .dot-shared { background-color: var(--shared-color); box-shadow: 0 0 8px rgba(0, 115, 187, 0.6); }
+        .dot-provisioned { background-color: var(--provisioned-color); box-shadow: 0 0 8px rgba(29, 129, 2, 0.6); }
+        .dot-pending { background-color: var(--pending-color); box-shadow: 0 0 8px rgba(255, 153, 0, 0.6); }
+
+        /* Canvas / SVG */
+        .diagram-wrapper {
+            background-color: #0b1120;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 20px;
+            overflow-x: auto;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+            margin-bottom: 24px;
+        }
+
+        svg {
+            display: block;
+            margin: 0 auto;
+            background-color: #0b1120;
+        }
+
+        /* Detalhamento dos Componentes */
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .card-detail {
+            background-color: #1e293b;
+            border-radius: 8px;
+            padding: 16px;
+            border-top: 4px solid #64748b;
+        }
+
+        .card-detail.shared { border-top-color: var(--shared-color); }
+        .card-detail.provisioned { border-top-color: var(--provisioned-color); }
+        .card-detail.pending { border-top-color: var(--pending-color); }
+
+        .card-detail h3 {
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .status-pill {
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 9999px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .pill-shared { background-color: rgba(0, 115, 187, 0.2); color: #38bdf8; border: 1px solid #0284c7; }
+        .pill-provisioned { background-color: rgba(29, 129, 2, 0.2); color: #4ade80; border: 1px solid #16a34a; }
+        .pill-pending { background-color: rgba(255, 153, 0, 0.2); color: #fbbf24; border: 1px solid #d97706; }
+
+        .card-detail p {
+            font-size: 0.85rem;
+            color: #94a3b8;
+            margin-bottom: 6px;
+        }
+
+        .card-detail code {
+            background-color: #0f172a;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 0.8rem;
+            color: #e2e8f0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div class="title-group">
+            <h1>
+                <span class="badge-desafio">Desafio 6</span>
+                N8N Queue Mode — Arquitetura AWS
+            </h1>
+            <p>Escalabilidade Distribuída com ECS EC2 (t3.small), ElastiCache Valkey (TLS + AUTH) e RDS PostgreSQL</p>
+        </div>
+        <div class="meta-info">
+            <div class="meta-card">
+                <div class="meta-label">Conta AWS</div>
+                <div class="meta-val">730972069864</div>
+            </div>
+            <div class="meta-card">
+                <div class="meta-label">Região</div>
+                <div class="meta-val">us-east-2 (Ohio)</div>
+            </div>
+            <div class="meta-card">
+                <div class="meta-label">Perfil CLI</div>
+                <div class="meta-val">n8n-lab</div>
+            </div>
+            <div class="meta-card">
+                <div class="meta-label">Versão do Plano</div>
+                <div class="meta-val">v3.0 Homologado</div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Legenda de Status -->
+    <div class="legend-card">
+        <div class="legend-item">
+            <span class="legend-dot dot-shared"></span>
+            <span>🔵 Recursos Compartilhados / Preexistentes (VPC, ACM, Hosted Zone)</span>
+        </div>
+        <div class="legend-item">
+            <span class="legend-dot dot-provisioned"></span>
+            <span>🟢 Recursos Implantados, Validados e Ativos (Etapas 1 a 12)</span>
+        </div>
+        <div class="legend-item">
+            <span class="legend-dot dot-provisioned" style="background-color: #38bdf8; box-shadow: 0 0 8px rgba(56, 189, 248, 0.6);"></span>
+            <span>✅ Teste de Resiliência de Fila Homologado com Sucesso</span>
+        </div>
+    </div>
+
+    <!-- Diagrama SVG Arquitetural -->
+    <div class="diagram-wrapper">
+        <svg width="1360" height="920" viewBox="0 0 1360 920" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="grad-aws" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stop-color="#1e293b"/>
+                    <stop offset="100%" stop-color="#0f172a"/>
+                </linearGradient>
+                <linearGradient id="grad-vpc" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stop-color="#111827"/>
+                    <stop offset="100%" stop-color="#030712"/>
+                </linearGradient>
+                <linearGradient id="grad-ec2" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stop-color="#1e293b"/>
+                    <stop offset="100%" stop-color="#0f172a"/>
+                </linearGradient>
+                <!-- Marcadores de Seta -->
+                <marker id="arrow-blue" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                    <path d="M 0 0 L 10 5 L 0 10 z" fill="#38bdf8"/>
+                </marker>
+                <marker id="arrow-green" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                    <path d="M 0 0 L 10 5 L 0 10 z" fill="#4ade80"/>
+                </marker>
+                <marker id="arrow-orange" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                    <path d="M 0 0 L 10 5 L 0 10 z" fill="#fb923c"/>
+                </marker>
+                <marker id="arrow-purple" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                    <path d="M 0 0 L 10 5 L 0 10 z" fill="#c084fc"/>
+                </marker>
+            </defs>
+
+            <!-- AWS Cloud Boundary -->
+            <rect x="20" y="20" width="1320" height="880" rx="16" fill="url(#grad-aws)" stroke="#475569" stroke-width="2"/>
+            <text x="50" y="55" fill="#e2e8f0" font-size="18" font-weight="700">AWS Cloud (Região us-east-2 · Ohio)</text>
+            <text x="50" y="78" fill="#94a3b8" font-size="12">Conta: 730972069864 · Projeto: BIA Cloud Lab AWS · Desafio 6</text>
+
+            <!-- SERVIÇOS GLOBAIS / BORDA (FORA DA VPC) -->
+            <!-- Usuário Externo -->
+            <rect x="50" y="140" width="100" height="90" rx="8" fill="#1e293b" stroke="#64748b" stroke-width="1.5"/>
+            <circle cx="100" cy="170" r="16" fill="#38bdf8"/>
+            <text x="100" y="210" fill="#f8fafc" font-size="12" font-weight="600" text-anchor="middle">Usuário / Webhook</text>
+
+            <!-- Route 53 (Compartilhado) -->
+            <rect x="210" y="140" width="150" height="90" rx="8" fill="#1e293b" stroke="#0073BB" stroke-width="2"/>
+            <rect x="220" y="148" width="22" height="22" rx="4" fill="#0073BB"/>
+            <text x="231" y="163" fill="white" font-size="11" font-weight="bold" text-anchor="middle">R53</text>
+            <text x="250" y="164" fill="#38bdf8" font-size="12" font-weight="700">Amazon Route 53</text>
+            <text x="220" y="190" fill="#94a3b8" font-size="10">n8n.bia.d2ns.com.br</text>
+            <text x="220" y="206" fill="#64748b" font-size="9">Hosted Zone: Z02006... (🔵)</text>
+
+            <!-- ACM (Compartilhado) -->
+            <rect x="210" y="260" width="150" height="80" rx="8" fill="#1e293b" stroke="#0073BB" stroke-width="2"/>
+            <rect x="220" y="268" width="22" height="22" rx="4" fill="#0073BB"/>
+            <text x="231" y="283" fill="white" font-size="10" font-weight="bold" text-anchor="middle">ACM</text>
+            <text x="250" y="284" fill="#38bdf8" font-size="12" font-weight="700">AWS ACM</text>
+            <text x="220" y="308" fill="#94a3b8" font-size="10">*.bia.d2ns.com.br</text>
+            <text x="220" y="324" fill="#4ade80" font-size="9">Status: ISSUED (🔵)</text>
+
+            <!-- SSM Parameter Store (Provisionado) -->
+            <rect x="50" y="440" width="310" height="150" rx="8" fill="#1e293b" stroke="#1D8102" stroke-width="2"/>
+            <rect x="60" y="448" width="22" height="22" rx="4" fill="#1D8102"/>
+            <text x="71" y="463" fill="white" font-size="10" font-weight="bold" text-anchor="middle">SSM</text>
+            <text x="90" y="464" fill="#4ade80" font-size="12" font-weight="700">AWS Systems Manager Parameter Store (🟢)</text>
+            <text x="60" y="492" fill="#e2e8f0" font-size="10">🔒 <tspan fill="#38bdf8">/n8n/valkey_token</tspan> (SecureString · AUTH)</text>
+            <text x="60" y="515" fill="#e2e8f0" font-size="10">🔒 <tspan fill="#38bdf8">/n8n/db_password</tspan> (SecureString · Postgres)</text>
+            <text x="60" y="538" fill="#e2e8f0" font-size="10">🔒 <tspan fill="#38bdf8">/n8n/encryption_key</tspan> (SecureString · Workflows)</text>
+            <text x="60" y="565" fill="#94a3b8" font-size="9">Injetados diretamente nas Tasks ECS via secrets sem texto claro</text>
+
+            <!-- CloudWatch Logs (A Criar) -->
+            <rect x="50" y="630" width="310" height="90" rx="8" fill="#1e293b" stroke="#FF9900" stroke-width="2"/>
+            <rect x="60" y="638" width="22" height="22" rx="4" fill="#FF9900"/>
+            <text x="71" y="653" fill="white" font-size="10" font-weight="bold" text-anchor="middle">CW</text>
+            <text x="90" y="654" fill="#fbbf24" font-size="12" font-weight="700">CloudWatch Logs: /ecs/n8n-ec2 (🟠)</text>
+            <text x="60" y="682" fill="#94a3b8" font-size="10">Streams segregados:</text>
+            <text x="60" y="700" fill="#e2e8f0" font-size="10">• <tspan fill="#38bdf8">n8n-main/...</tspan>  |  • <tspan fill="#4ade80">n8n-worker/...</tspan></text>
+
+            <!-- VPC BOUNDARY -->
+            <rect x="400" y="70" width="910" height="800" rx="12" fill="url(#grad-vpc)" stroke="#0073BB" stroke-width="2"/>
+            <rect x="415" y="58" width="230" height="24" rx="4" fill="#0073BB"/>
+            <text x="425" y="74" fill="white" font-size="11" font-weight="700">VPC: vpc-093b15ec114bc9eb2 (🔵)</text>
+            <text x="655" y="74" fill="#94a3b8" font-size="11">CIDR: 172.31.0.0/16 · Default VPC com Internet Gateway nativo</text>
+
+            <!-- SUBNET 2A & 2B (Compartilhadas) -->
+            <rect x="420" y="100" width="870" height="750" rx="8" fill="#030712" stroke="#334155" stroke-dasharray="4 4" stroke-width="1.5"/>
+            <text x="435" y="120" fill="#64748b" font-size="11" font-weight="600">Subnets Públicas Multi-AZ: subnet-0aef2d36da47e89e9 (us-east-2a) · subnet-0c9a226c460d77c8f (us-east-2b)</text>
+
+            <!-- ALB (A Criar) -->
+            <rect x="440" y="145" width="240" height="110" rx="8" fill="#1e293b" stroke="#FF9900" stroke-width="2"/>
+            <rect x="450" y="153" width="22" height="22" rx="4" fill="#FF9900"/>
+            <text x="461" y="168" fill="white" font-size="10" font-weight="bold" text-anchor="middle">ALB</text>
+            <text x="480" y="169" fill="#fbbf24" font-size="12" font-weight="700">ALB: n8n-d2n-alb (🟠)</text>
+            <text x="450" y="195" fill="#38bdf8" font-size="10">Listener HTTPS:443 (Cert ACM)</text>
+            <text x="450" y="212" fill="#94a3b8" font-size="10">Security Group: <tspan fill="#4ade80">sg-n8n-alb (🟢)</tspan></text>
+            <text x="450" y="230" fill="#64748b" font-size="9">Internet-Facing · Subnets 2a &amp; 2b</text>
+
+            <!-- Target Group (A Criar) -->
+            <rect x="440" y="280" width="240" height="90" rx="8" fill="#1e293b" stroke="#FF9900" stroke-width="2"/>
+            <text x="450" y="304" fill="#fbbf24" font-size="12" font-weight="700">Target Group: tg-n8n-d2n (🟠)</text>
+            <text x="450" y="325" fill="#94a3b8" font-size="10">Target Type: <tspan fill="#e2e8f0">instance (HTTP:5678)</tspan></text>
+            <text x="450" y="342" fill="#38bdf8" font-size="10">Health Check: /healthz (Delay 30s)</text>
+            <text x="450" y="358" fill="#e2e8f0" font-size="9">Dynamic Port: registra porta efêmera real</text>
+
+            <!-- ECS EC2 HOST (t3.small) & CLUSTER -->
+            <rect x="440" y="395" width="460" height="430" rx="10" fill="url(#grad-ec2)" stroke="#FF9900" stroke-width="2"/>
+            <text x="455" y="420" fill="#fbbf24" font-size="13" font-weight="700">ECS Cluster: cluster-n8n-d2n · ASG: asg-n8n-d2n (🟠)</text>
+            <text x="455" y="438" fill="#94a3b8" font-size="10">Host EC2: <tspan fill="#f8fafc" font-weight="bold">t3.small</tspan> (2 vCPU · 2 GB RAM) · SG: <tspan fill="#4ade80">sg-n8n-ec2 (🟢)</tspan></text>
+            <text x="455" y="454" fill="#38bdf8" font-size="9">Modo Bridge · Capacidade Real Registrada no ECS: ~1.918 MiB</text>
+
+            <!-- SERVICE MAIN -->
+            <rect x="460" y="475" width="420" height="150" rx="8" fill="#0f172a" stroke="#FF9900" stroke-width="2"/>
+            <rect x="470" y="485" width="20" height="20" rx="4" fill="#FF9900"/>
+            <text x="480" y="499" fill="white" font-size="10" font-weight="bold" text-anchor="middle">M</text>
+            <text x="498" y="500" fill="#fbbf24" font-size="12" font-weight="700">SERVICE-n8n-main (Desired: 1 Task) (🟠)</text>
+            <text x="470" y="525" fill="#38bdf8" font-size="10">Task: task-def-n8n-main · Soft Limit: 650 MiB (Hard: 800 MiB)</text>
+            <text x="470" y="542" fill="#94a3b8" font-size="10">Comando: <tspan fill="#e2e8f0">padrão n8n</tspan> · Papéis: <tspan fill="#e2e8f0">UI / Editor / Webhook / Timers</tspan></text>
+            <text x="470" y="560" fill="#4ade80" font-size="10">Dynamic Port: <tspan fill="#e2e8f0">containerPort 5678 -> hostPort 32768-65535</tspan></text>
+            <text x="470" y="578" fill="#fb923c" font-size="9">EXECUTIONS_MODE=queue · OFFLOAD_MANUAL_EXECUTIONS_TO_WORKERS=true</text>
+            <text x="470" y="596" fill="#94a3b8" font-size="9">Enfileira executionId no Valkey · Sem processamento pesado de nós</text>
+
+            <!-- SERVICE WORKER -->
+            <rect x="460" y="645" width="420" height="160" rx="8" fill="#0f172a" stroke="#FF9900" stroke-width="2"/>
+            <rect x="470" y="655" width="20" height="20" rx="4" fill="#FF9900"/>
+            <text x="480" y="669" fill="white" font-size="10" font-weight="bold" text-anchor="middle">W</text>
+            <text x="498" y="670" fill="#fbbf24" font-size="12" font-weight="700">SERVICE-n8n-worker (Desired: 2 Tasks · w1 e w2) (🟠)</text>
+            <text x="470" y="695" fill="#38bdf8" font-size="10">Task: task-def-n8n-worker · Soft: 450 MiB cada (Hard: 550 MiB)</text>
+            <text x="470" y="712" fill="#e2e8f0" font-size="10">Comando: <tspan fill="#fbbf24">["worker", "--concurrency=5"]</tspan> · <tspan fill="#f8fafc">Sem Portas / Sem ALB</tspan></text>
+            <text x="470" y="730" fill="#94a3b8" font-size="10">Consumo assíncrono via BullMQ · Desacoplamento total da interface</text>
+            
+            <!-- Tasks w1 e w2 representadas internamente -->
+            <rect x="475" y="742" width="185" height="48" rx="6" fill="#1e293b" stroke="#334155"/>
+            <text x="485" y="762" fill="#4ade80" font-size="10" font-weight="bold">Worker Task w1</text>
+            <text x="485" y="778" fill="#94a3b8" font-size="9">softLimit: 450 MiB · CPU: 0</text>
+
+            <rect x="680" y="742" width="185" height="48" rx="6" fill="#1e293b" stroke="#334155"/>
+            <text x="690" y="762" fill="#4ade80" font-size="10" font-weight="bold">Worker Task w2</text>
+            <text x="690" y="778" fill="#94a3b8" font-size="9">softLimit: 450 MiB · CPU: 0</text>
+
+            <!-- CAMADA DE DADOS E MENSAGERIA (LADO DIREITO DA VPC) -->
+            <!-- Amazon ElastiCache Valkey (Provisionado) -->
+            <rect x="940" y="395" width="345" height="200" rx="10" fill="#1e293b" stroke="#1D8102" stroke-width="2.5"/>
+            <rect x="955" y="405" width="22" height="22" rx="4" fill="#1D8102"/>
+            <text x="966" y="420" fill="white" font-size="10" font-weight="bold" text-anchor="middle">V</text>
+            <text x="985" y="421" fill="#4ade80" font-size="13" font-weight="700">Amazon ElastiCache Valkey (🟢)</text>
+            <text x="955" y="445" fill="#38bdf8" font-size="11" font-weight="600">master.n8n-valkey.hkfaul.use2.cache.amazonaws.com</text>
+            <text x="955" y="468" fill="#e2e8f0" font-size="10">• Engine: <tspan fill="#38bdf8">valkey 7.2</tspan> (100% RESP / BullMQ)</text>
+            <text x="955" y="488" fill="#e2e8f0" font-size="10">• Nó: <tspan fill="#38bdf8">cache.t4g.micro</tspan> (Graviton2 · 1 nó primário)</text>
+            <text x="955" y="508" fill="#4ade80" font-size="10">🔒 <tspan fill="#f8fafc">Transit Encryption (TLS):</tspan> Habilitado (Porta 6379)</text>
+            <text x="955" y="528" fill="#4ade80" font-size="10">🔑 <tspan fill="#f8fafc">AUTH Token:</tspan> Habilitado via /n8n/valkey_token</text>
+            <text x="955" y="548" fill="#94a3b8" font-size="9">SG: <tspan fill="#4ade80">sg-n8n-valkey-sg (🟢)</tspan> · Subnet Group: n8n-valkey-subgrp</text>
+            <text x="955" y="568" fill="#facc15" font-size="9">Status: AVAILABLE · Fila transitória BullMQ</text>
+
+            <!-- Amazon RDS PostgreSQL (Provisionado) -->
+            <rect x="940" y="625" width="345" height="200" rx="10" fill="#1e293b" stroke="#1D8102" stroke-width="2.5"/>
+            <rect x="955" y="635" width="22" height="22" rx="4" fill="#1D8102"/>
+            <text x="966" y="650" fill="white" font-size="10" font-weight="bold" text-anchor="middle">DB</text>
+            <text x="985" y="651" fill="#4ade80" font-size="13" font-weight="700">Amazon RDS PostgreSQL (🟢)</text>
+            <text x="955" y="675" fill="#38bdf8" font-size="11" font-weight="600">n8n.ctekugasc68m.us-east-2.rds.amazonaws.com</text>
+            <text x="955" y="698" fill="#e2e8f0" font-size="10">• Engine: <tspan fill="#38bdf8">PostgreSQL 16.13</tspan> (Porta 5432)</text>
+            <text x="955" y="718" fill="#e2e8f0" font-size="10">• Classe: <tspan fill="#38bdf8">db.t3.micro</tspan> (20 GB gp2 · Single-AZ)</text>
+            <text x="955" y="738" fill="#e2e8f0" font-size="10">• Acesso Público: <tspan fill="#ef4444">false</tspan> (100% privado na VPC)</text>
+            <text x="955" y="758" fill="#94a3b8" font-size="10">SG: <tspan fill="#4ade80">sg-n8n-db (🟢)</tspan> · Subnets: default-vpc-093b15ec...</text>
+            <text x="955" y="778" fill="#4ade80" font-size="10">Status: AVAILABLE · Persistência perene</text>
+            <text x="955" y="798" fill="#94a3b8" font-size="9">Workflows, credenciais, execuções e histórico</text>
+
+            <!-- LINHAS DE FLUXO / CONEXÕES -->
+            <!-- Usuário -> Route 53 -->
+            <path d="M 150 185 L 210 185" stroke="#38bdf8" stroke-width="2" marker-end="url(#arrow-blue)"/>
+
+            <!-- Route 53 -> ALB -->
+            <path d="M 360 185 L 440 185" stroke="#38bdf8" stroke-width="2" marker-end="url(#arrow-blue)"/>
+            <text x="390" y="175" fill="#38bdf8" font-size="9" text-anchor="middle">HTTPS:443</text>
+
+            <!-- ACM -> ALB (Certificado) -->
+            <path d="M 360 300 L 410 300 L 410 220 L 440 220" stroke="#0073BB" stroke-dasharray="3 3" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+            <text x="385" y="270" fill="#38bdf8" font-size="8">TLS Cert</text>
+
+            <!-- ALB -> Target Group -->
+            <path d="M 560 255 L 560 280" stroke="#fb923c" stroke-width="2" marker-end="url(#arrow-orange)"/>
+
+            <!-- Target Group -> Service Main (Dynamic Port) -->
+            <path d="M 560 370 L 560 475" stroke="#fb923c" stroke-width="2" marker-end="url(#arrow-orange)"/>
+            <text x="570" y="420" fill="#fb923c" font-size="9">TCP:32768-65535</text>
+
+            <!-- Service Main -> Valkey (Enfileiramento) -->
+            <path d="M 880 520 L 940 500" stroke="#4ade80" stroke-width="2" marker-end="url(#arrow-green)"/>
+            <text x="905" y="495" fill="#4ade80" font-size="9" font-weight="bold">1. Enfileira (TLS:6379)</text>
+
+            <!-- Service Main -> RDS (Metadados/Configs) -->
+            <path d="M 880 570 L 910 570 L 910 680 L 940 680" stroke="#38bdf8" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+            <text x="915" y="620" fill="#38bdf8" font-size="8">Configs (5432)</text>
+
+            <!-- Workers -> Valkey (Consumo de Fila) -->
+            <path d="M 880 700 L 920 700 L 920 540 L 940 540" stroke="#4ade80" stroke-width="2" marker-end="url(#arrow-green)"/>
+            <text x="895" y="650" fill="#4ade80" font-size="9" font-weight="bold">2. Consome (TLS:6379)</text>
+
+            <!-- Workers -> RDS (Gravação de Execuções) -->
+            <path d="M 880 750 L 940 750" stroke="#c084fc" stroke-width="2" marker-end="url(#arrow-purple)"/>
+            <text x="910" y="740" fill="#c084fc" font-size="9" font-weight="bold">3. Persiste (5432)</text>
+        </svg>
+    </div>
+
+    <!-- Tabela Detalhada dos Componentes -->
+    <div class="details-grid">
+        <div class="card-detail shared">
+            <h3>
+                <span>Route 53 &amp; ACM</span>
+                <span class="status-pill pill-shared">Compartilhado</span>
+            </h3>
+            <p><strong>Domínio:</strong> <code>n8n.bia.d2ns.com.br</code></p>
+            <p><strong>Hosted Zone:</strong> <code>Z0200626TQFMAZ5GPD92</code></p>
+            <p><strong>Certificado ACM:</strong> Wildcard <code>*.bia.d2ns.com.br</code> em status <code>ISSUED</code>.</p>
+        </div>
+
+        <div class="card-detail provisioned">
+            <h3>
+                <span>Amazon ElastiCache Valkey</span>
+                <span class="status-pill pill-provisioned">Provisionado (Etapa 4)</span>
+            </h3>
+            <p><strong>Endpoint:</strong> <code>master.n8n-valkey.hkfaul.use2.cache.amazonaws.com:6379</code></p>
+            <p><strong>Engine:</strong> Valkey 7.2 (1 nó <code>cache.t4g.micro</code> Single-AZ)</p>
+            <p><strong>Segurança:</strong> TLS Ativado + AUTH Token via SSM.</p>
+        </div>
+
+        <div class="card-detail provisioned">
+            <h3>
+                <span>Amazon RDS PostgreSQL</span>
+                <span class="status-pill pill-provisioned">Provisionado (Etapa 3)</span>
+            </h3>
+            <p><strong>Endpoint:</strong> <code>n8n.ctekugasc68m.us-east-2.rds.amazonaws.com:5432</code></p>
+            <p><strong>Instância:</strong> <code>db.t3.micro</code>, 20 GB gp2, PostgreSQL 16.13</p>
+            <p><strong>Segurança:</strong> Não público (100% privado na VPC), SG <code>n8n-db</code>.</p>
+        </div>
+
+        <div class="card-detail provisioned">
+            <h3>
+                <span>Security Groups &amp; SSM</span>
+                <span class="status-pill pill-provisioned">Provisionado (Etapas 1 e 2)</span>
+            </h3>
+            <p><strong>Security Groups:</strong> <code>n8n-alb</code>, <code>n8n-ec2</code>, <code>n8n-db</code>, <code>n8n-valkey-sg</code>.</p>
+            <p><strong>Segredos SSM:</strong> <code>/n8n/valkey_token</code>, <code>/n8n/db_password</code>, <code>/n8n/encryption_key</code>.</p>
+        </div>
+
+        <div class="card-detail provisioned">
+            <h3>
+                <span>ALB &amp; Target Group</span>
+                <span class="status-pill pill-provisioned">Implantado e Validado</span>
+            </h3>
+            <p><strong>Load Balancer:</strong> <code>n8n-d2n-alb</code> (DNS: <code>n8n-d2n-alb-706987622.us-east-2.elb.amazonaws.com</code>).</p>
+            <p><strong>Target Group:</strong> <code>tg-n8n-d2n</code> tipo <code>instance</code> com dynamic port mapping (Target: <code>i-09f7979988ba3b9b7</code> com porta efêmera dinâmica, ex. <code>32769</code> observada no teste, status <code>healthy</code>).</p>
+        </div>
+
+        <div class="card-detail provisioned">
+            <h3>
+                <span>ECS EC2 Host &amp; Services</span>
+                <span class="status-pill pill-provisioned">Implantado e Validado</span>
+            </h3>
+            <p><strong>EC2 Host:</strong> 1x <code>t3.small</code> (<code>i-09f7979988ba3b9b7</code>, 1.913 MiB registrados no ECS, 363 MiB de capacidade residual de agendamento).</p>
+            <p><strong>Services:</strong> <code>svc-n8n-main</code> (1 task UI) + <code>svc-n8n-worker</code> (2 tasks workers em Queue Mode).</p>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
