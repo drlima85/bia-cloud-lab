@@ -4,7 +4,7 @@
   "requiresCompatibilities": [
     "EC2"
   ],
-  "executionRoleArn": "arn:aws:iam::730972069864:role/n8n-task-execution-role",
+  "executionRoleArn": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/n8n-task-execution-role",
   "containerDefinitions": [
     {
       "name": "n8n-main",
@@ -21,7 +21,7 @@
       ],
       "environment": [
         { "name": "DB_TYPE", "value": "postgresdb" },
-        { "name": "DB_POSTGRESDB_HOST", "value": "n8n.ctekugasc68m.us-east-2.rds.amazonaws.com" },
+        { "name": "DB_POSTGRESDB_HOST", "value": "${RDS_ENDPOINT}" },
         { "name": "DB_POSTGRESDB_PORT", "value": "5432" },
         { "name": "DB_POSTGRESDB_DATABASE", "value": "n8n" },
         { "name": "DB_POSTGRESDB_USER", "value": "postgres" },
@@ -36,7 +36,7 @@
         { "name": "N8N_SECURE_COOKIE", "value": "true" },
         { "name": "GENERIC_TIMEZONE", "value": "America/Sao_Paulo" },
         { "name": "EXECUTIONS_MODE", "value": "queue" },
-        { "name": "QUEUE_BULL_REDIS_HOST", "value": "master.n8n-valkey.hkfaul.use2.cache.amazonaws.com" },
+        { "name": "QUEUE_BULL_REDIS_HOST", "value": "${VALKEY_ENDPOINT}" },
         { "name": "QUEUE_BULL_REDIS_PORT", "value": "6379" },
         { "name": "QUEUE_BULL_REDIS_TLS", "value": "true" },
         { "name": "OFFLOAD_MANUAL_EXECUTIONS_TO_WORKERS", "value": "true" }
@@ -44,15 +44,15 @@
       "secrets": [
         {
           "name": "DB_POSTGRESDB_PASSWORD",
-          "valueFrom": "arn:aws:ssm:us-east-2:730972069864:parameter/n8n/db_password"
+          "valueFrom": "arn:aws:ssm:us-east-2:${AWS_ACCOUNT_ID}:parameter/n8n/db_password"
         },
         {
           "name": "N8N_ENCRYPTION_KEY",
-          "valueFrom": "arn:aws:ssm:us-east-2:730972069864:parameter/n8n/encryption_key"
+          "valueFrom": "arn:aws:ssm:us-east-2:${AWS_ACCOUNT_ID}:parameter/n8n/encryption_key"
         },
         {
           "name": "QUEUE_BULL_REDIS_PASSWORD",
-          "valueFrom": "arn:aws:ssm:us-east-2:730972069864:parameter/n8n/valkey_token"
+          "valueFrom": "arn:aws:ssm:us-east-2:${AWS_ACCOUNT_ID}:parameter/n8n/valkey_token"
         }
       ],
       "logConfiguration": {

@@ -94,7 +94,7 @@ O ambiente do Desafio 5 foi projetado para coexistir na mesma conta AWS da aplic
 2. **Segregação de Segurança em Rede:**
    Security Groups dedicados (`n8n-alb`, `n8n-ec2`, `n8n-db`) isolados dos Security Groups da BIA, sem regras de compartilhamento de tráfego entre os dois ecossistemas.
 3. **Ponto de Atenção — Route 53 Compartilhado:**
-   A zona DNS `bia.d2ns.com.br` (`Z0200626TQFMAZ5GPD92`) é compartilhada. A política concedeu `route53:ChangeResourceRecordSets` na hosted zone. A proteção dos registros preexistentes do BIA foi assegurada por **isolamento de apontamento** (criação exclusiva do subdomínio `n8n.bia.d2ns.com.br`). Em ambientes corporativos de produção, a recomendação é a criação de uma subzona delegada exclusiva para automações.
+   A zona DNS `bia.d2ns.com.br` (`${ROUTE53_HOSTED_ZONE_ID}`) é compartilhada. A política concedeu `route53:ChangeResourceRecordSets` na hosted zone. A proteção dos registros preexistentes do BIA foi assegurada por **isolamento de apontamento** (criação exclusiva do subdomínio `n8n.bia.d2ns.com.br`). Em ambientes corporativos de produção, a recomendação é a criação de uma subzona delegada exclusiva para automações.
 
 ---
 

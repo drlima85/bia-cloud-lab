@@ -1,7 +1,7 @@
 # Desafio 5 — N8N na AWS: Single Mode com Auto-Recovery (Arquitetura do Instrutor)
 
 **Projeto:** BIA Cloud Lab  
-**Conta AWS:** <AWS_ACCOUNT_ID>  
+**Conta AWS:** ${AWS_ACCOUNT_ID}
 **Região:** us-east-2  
 **Versão do plano:** 2.1 (Revisado com Boas Práticas e Auto-Recovery)  
 **Data:** 2026-11-09  
@@ -42,7 +42,7 @@ O que esta arquitetura oferece é **Recuperação Automática (Self-Healing)** c
 | **SSL do Banco** | `DB_POSTGRESDB_SSL_REJECT_UNAUTHORIZED=false` | Criptografia em trânsito (TLS) ativada sem dependência de montagem do pacote de certificados raiz CA da AWS dentro do container. |
 | **Imagem N8N** | `n8nio/n8n:2.22.6` | Versão estável, homologada pelo instrutor e validada no Docker Hub para arquitetura x86_64. |
 | **Memória da Task** | `memoryReservation: 650` MiB | Soft limit viável para o `t3.micro` (overhead do SO/Docker/ECS de ~300 MiB; ~700 MiB alocáveis para containers). |
-| **DNS** | Registro A (Alias) no Route 53 | Apontamento nativo para o ALB na Hosted Zone existente `Z0200626TQFMAZ5GPD92`. |
+| **DNS** | Registro A (Alias) no Route 53 | Apontamento nativo para o ALB na Hosted Zone existente `${ROUTE53_HOSTED_ZONE_ID}`. |
 
 ---
 
@@ -130,7 +130,7 @@ Todas as permissões do usuário `n8n-lab` utilizam **Políticas Gerenciadas pel
   - Anexadas: `AmazonEC2ContainerServiceforEC2Role` e `AmazonSSMManagedInstanceCore`.
 - **`n8n-task-execution-role`:**
   - Anexada: `service-role/AmazonECSTaskExecutionRolePolicy`.
-  - Inline Policy `n8n-ssm-secrets-policy`: Permite `ssm:GetParameters` nos recursos `arn:aws:ssm:us-east-2:<AWS_ACCOUNT_ID>:parameter/n8n/*`.
+  - Inline Policy `n8n-ssm-secrets-policy`: Permite `ssm:GetParameters` nos recursos `arn:aws:ssm:us-east-2:${AWS_ACCOUNT_ID}:parameter/n8n/*`.
 
 ---
 
@@ -141,43 +141,43 @@ Todas as permissões do usuário `n8n-lab` utilizam **Políticas Gerenciadas pel
 - Validado: SSM SecureString `/n8n/db_password` e `/n8n/encryption_key` ativos.
 
 ### Etapa 2 — Security Groups (CONCLUÍDA)
-- Criar `n8n-alb` (porta 443 aberta para 0.0.0.0/0) — `sg-0c730a80bd90e04b6`.
-- Criar `n8n-ec2` (portas 32768–65535 permitidas a partir de `n8n-alb`) — `sg-0f19e61de96d6e92b`.
-- Criar `n8n-db` (porta 5432 permitida a partir de `n8n-ec2`) — `sg-031c278d1201dbd7f`.
+- Criar `n8n-alb` (porta 443 aberta para 0.0.0.0/0) — `${SG_ALB_ID}`.
+- Criar `n8n-ec2` (portas 32768–65535 permitidas a partir de `n8n-alb`) — `${SG_EC2_ID}`.
+- Criar `n8n-db` (porta 5432 permitida a partir de `n8n-ec2`) — `${SG_DB_ID}`.
 
 ### Etapa 3 — RDS PostgreSQL (CONCLUÍDA)
 - Criar instância `n8n` (`db.t3.micro`, 20 GB gp2, Single-AZ, não pública).
-- Aguardar status `available` e registrar o endpoint DNS do banco (`n8n.ctekugasc68m.us-east-2.rds.amazonaws.com`).
+- Aguardar status `available` e registrar o endpoint DNS do banco (`${RDS_ENDPOINT}`).
 
 ### Etapa 4 — Validação do ACM (CONCLUÍDA)
-- Consultar certificado wildcard `*.bia.d2ns.com.br` existente em us-east-2 e validar status `ISSUED` — ARN: `arn:aws:acm:us-east-2:<AWS_ACCOUNT_ID>:certificate/56a03714-9967-4655-b162-d4badfd3445a`.
+- Consultar certificado wildcard `*.bia.d2ns.com.br` existente em us-east-2 e validar status `ISSUED` — ARN: `arn:aws:acm:us-east-2:${AWS_ACCOUNT_ID}:certificate/${ACM_CERTIFICATE_ID}`.
 
 ### Etapa 5 — ALB e Target Group (CONCLUÍDA)
-- Criar Target Group `tg-n8n-d2n` (tipo `instance`, porta 5678, path `/healthz`, deregistration_delay: 30s) — `arn:aws:elasticloadbalancing:us-east-2:<AWS_ACCOUNT_ID>:targetgroup/tg-n8n-d2n/f7b75aaea2ff2e84` (atributo `deregistration_delay.timeout_seconds=30` validado e ativo).
-- Criar ALB `n8n-d2n-alb` internet-facing nas subnets 2a e 2b com SG `n8n-alb` — `n8n-d2n-alb-56749819.us-east-2.elb.amazonaws.com`.
-- Criar Listener HTTPS 443 associando o certificado ACM e forward para `tg-n8n-d2n` — `arn:aws:elasticloadbalancing:us-east-2:<AWS_ACCOUNT_ID>:listener/app/n8n-d2n-alb/1b169b275ab952f6/b70a6841b861e714`.
+- Criar Target Group `tg-n8n-d2n` (tipo `instance`, porta 5678, path `/healthz`, deregistration_delay: 30s) — `arn:aws:elasticloadbalancing:us-east-2:${AWS_ACCOUNT_ID}:targetgroup/tg-n8n-d2n/${TARGET_GROUP_ID}` (atributo `deregistration_delay.timeout_seconds=30` validado e ativo).
+- Criar ALB `n8n-d2n-alb` internet-facing nas subnets 2a e 2b com SG `n8n-alb` — `${ALB_DNS}`.
+- Criar Listener HTTPS 443 associando o certificado ACM e forward para `tg-n8n-d2n` — `arn:aws:elasticloadbalancing:us-east-2:${AWS_ACCOUNT_ID}:listener/app/n8n-d2n-alb/${ALB_LISTENER_ID}`.
 
 ### Etapa 6 — ECS Cluster, Roles e Capacidade EC2 (CONCLUÍDA)
 - Roles `n8n-ec2-instance-role` e `n8n-task-execution-role` e instance profile `n8n-ec2-instance-profile` criados com menor privilégio.
 - Cluster `cluster-n8n-d2n` criado e ativo.
-- Launch Template `lt-n8n-d2n` (`lt-0a06127c05665549b`) configurado com AL2023 ECS AMI (`ami-030831d5502ebf96d`), `t3.micro`, SG `n8n-ec2` e auto-registro no cluster via User Data.
+- Launch Template `lt-n8n-d2n` (`${LAUNCH_TEMPLATE_ID}`) configurado com AL2023 ECS AMI (`ami-030831d5502ebf96d`), `t3.micro`, SG `n8n-ec2` e auto-registro no cluster via User Data.
 - Auto Scaling Group `asg-n8n-d2n` (min=1, max=1, desired=1) provisionado nas subnets 2a e 2b.
 - Capacity Provider `cp-n8n-d2n` (managed scaling DISABLED) criado e vinculado ao cluster com default strategy.
-- Container Instance `i-0aa9ffe16a7b2aa26` registrada como `ACTIVE` no cluster com **916 MiB de memória disponível** para a task.
+- Container Instance `${EC2_INSTANCE_ID}` registrada como `ACTIVE` no cluster com **916 MiB de memória disponível** para a task.
 
 ### Etapa 7 — CloudWatch Logs (CONCLUÍDA)
-- Criar Log Group `/ecs/n8n-ec2` — `arn:aws:logs:us-east-2:<AWS_ACCOUNT_ID>:log-group:/ecs/n8n-ec2:*` (retenção padrão).
+- Criar Log Group `/ecs/n8n-ec2` — `arn:aws:logs:us-east-2:${AWS_ACCOUNT_ID}:log-group:/ecs/n8n-ec2:*` (retenção padrão).
 
 ### Etapa 8 — Task Definition (CONCLUÍDA)
-- Registrar `task-def-n8n-d2n` no modo `bridge`, imagem `n8nio/n8n:2.22.6`, `memoryReservation: 650`, Dynamic Port Mapping (`hostPort: 0`, `containerPort: 5678`), variáveis de ambiente (incluindo `DB_POSTGRESDB_SSL_ENABLED=true` e `DB_POSTGRESDB_SSL_REJECT_UNAUTHORIZED=false`) e segredos SSM — ARN ativo: `arn:aws:ecs:us-east-2:<AWS_ACCOUNT_ID>:task-definition/task-def-n8n-d2n:2`.
+- Registrar `task-def-n8n-d2n` no modo `bridge`, imagem `n8nio/n8n:2.22.6`, `memoryReservation: 650`, Dynamic Port Mapping (`hostPort: 0`, `containerPort: 5678`), variáveis de ambiente (incluindo `DB_POSTGRESDB_SSL_ENABLED=true` e `DB_POSTGRESDB_SSL_REJECT_UNAUTHORIZED=false`) e segredos SSM — ARN ativo: `arn:aws:ecs:us-east-2:${AWS_ACCOUNT_ID}:task-definition/task-def-n8n-d2n:2`.
 
 ### Etapa 9 — ECS Service (CONCLUÍDA)
 - Criar `svc-n8n-d2n` utilizando Capacity Provider Strategy (`cp-n8n-d2n`, weight=1), desired=1, min=0%, max=100%, rebalancing DISABLED, vinculado ao Target Group `tg-n8n-d2n`.
-- Target `i-0aa9ffe16a7b2aa26:32768` registrado dinamicamente e validado em estado `healthy`.
+- Target `${EC2_INSTANCE_ID}:32768` registrado dinamicamente e validado em estado `healthy`.
 - Task `57efd60c4c33485da8f9eeb389d64e14` em `RUNNING`, steady state atingido e migrações do PostgreSQL concluídas com sucesso.
 
 ### Etapa 10 — Route 53 e Validação Final (CONCLUÍDA)
-- Criar registro A (Alias) para `n8n.bia.d2ns.com.br` apontando para o DNS name do ALB na Hosted Zone `Z0200626TQFMAZ5GPD92` (Alias Hosted Zone ID `Z3AADJGX6KTTL2`, `EvaluateTargetHealth=false`).
+- Criar registro A (Alias) para `n8n.bia.d2ns.com.br` apontando para o DNS name do ALB na Hosted Zone `${ROUTE53_HOSTED_ZONE_ID}` (Alias Hosted Zone ID `Z3AADJGX6KTTL2`, `EvaluateTargetHealth=false`).
 - Sincronização `INSYNC` confirmada, resolução DNS pública validada, acesso HTTPS testado fim a fim (HTTP/2 200) com certificado wildcard `*.bia.d2ns.com.br` válido e endpoint `/healthz` operacional (`{"status":"ok"}`).
 
 ---

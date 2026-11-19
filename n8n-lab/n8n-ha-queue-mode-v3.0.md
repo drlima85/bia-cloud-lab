@@ -1,7 +1,7 @@
 # Desafio 6 — N8N na AWS: Queue Mode com Amazon ElastiCache Valkey
 
 **Projeto:** BIA Cloud Lab AWS  
-**Conta AWS:** `730972069864`  
+**Conta AWS:** `${AWS_ACCOUNT_ID}`
 **Região:** `us-east-2` (Ohio)  
 **Versão do Plano:** 3.0 (Queue Mode com ElastiCache Valkey e TLS)  
 **Data:** 2026-11-09  
@@ -106,7 +106,7 @@ Para assegurar total continuidade com o Desafio 5, as convenções de nomenclatu
 | 13 | **Task Def Worker** | `task-def-n8n-worker` | `memoryReservation: 450`, sem portas, `command: ["worker"]`, `EXECUTIONS_MODE=queue`, `QUEUE_BULL_REDIS_TLS=true`. |
 | 14 | **ECS Service Main** | `svc-n8n-main` | desired=1, ligado ao `tg-n8n-d2n`, CP strategy `cp-n8n-d2n`. |
 | 15 | **ECS Service Worker** | `svc-n8n-worker` | desired=2 (tasks `w1` e `w2`), sem Target Group, CP strategy `cp-n8n-d2n`. |
-| 16 | **Route 53 DNS** | `n8n.bia.d2ns.com.br` | Registro Alias A apontando para o ALB na Hosted Zone `Z0200626TQFMAZ5GPD92`. |
+| 16 | **Route 53 DNS** | `n8n.bia.d2ns.com.br` | Registro Alias A apontando para o ALB na Hosted Zone `${ROUTE53_HOSTED_ZONE_ID}`. |
 | 17 | **CloudWatch Logs** | `/ecs/n8n-ec2` | Log streams segregados com prefixos `n8n-main` e `n8n-worker`. |
 | 18 | **SSM Parameters** | `/n8n/*` | `/n8n/db_password`, `/n8n/encryption_key` e `/n8n/valkey_token` (`SecureString`). |
 
@@ -183,9 +183,9 @@ Para evitar o uso de privilégios excessivos (`AmazonElastiCacheFullAccess`), a 
     "elasticache:ListTagsForResource"
   ],
   "Resource": [
-    "arn:aws:elasticache:us-east-2:730972069864:cluster:n8n-*",
-    "arn:aws:elasticache:us-east-2:730972069864:subgroup:n8n-*",
-    "arn:aws:elasticache:us-east-2:730972069864:parametergroup:*"
+    "arn:aws:elasticache:us-east-2:${AWS_ACCOUNT_ID}:cluster:n8n-*",
+    "arn:aws:elasticache:us-east-2:${AWS_ACCOUNT_ID}:subgroup:n8n-*",
+    "arn:aws:elasticache:us-east-2:${AWS_ACCOUNT_ID}:parametergroup:*"
   ]
 }
 ```
@@ -193,7 +193,7 @@ Para evitar o uso de privilégios excessivos (`AmazonElastiCacheFullAccess`), a 
 
 ### 6.3 Permissões de Execução ECS (`n8n-task-execution-role`)
 A role de execução das tasks já existente herdará acesso de leitura ao novo token do Valkey via SSM:
-- **Recursos Permitidos:** `arn:aws:ssm:us-east-2:730972069864:parameter/n8n/*`.
+- **Recursos Permitidos:** `arn:aws:ssm:us-east-2:${AWS_ACCOUNT_ID}:parameter/n8n/*`.
 
 ---
 
@@ -494,8 +494,8 @@ Estimativa baseada em execução na região `us-east-2` (Ohio):
 ### 11.1 Checklist de Implementação
 - [x] Parâmetros `/n8n/valkey_token`, `/n8n/db_password` e `/n8n/encryption_key` validados no SSM.
 - [x] Security Groups `n8n-alb`, `n8n-ec2`, `n8n-db` e `n8n-valkey-sg` provisionados.
-- [x] RDS PostgreSQL operacional e endpoint coletado (`n8n.ctekugasc68m.us-east-2.rds.amazonaws.com:5432`).
-- [x] ElastiCache Valkey (`cache.t4g.micro`) em estado `available` com TLS e Auth Token (`master.n8n-valkey.hkfaul.use2.cache.amazonaws.com:6379`).
+- [x] RDS PostgreSQL operacional e endpoint coletado (`${RDS_ENDPOINT}:5432`).
+- [x] ElastiCache Valkey (`cache.t4g.micro`) em estado `available` com TLS e Auth Token (`${VALKEY_ENDPOINT}:6379`).
 - [x] Target Group `tg-n8n-d2n` e ALB `n8n-d2n-alb` operacionais (`HTTP/2 200` em `/healthz`).
 - [x] Launch Template (`t3.small`) e ASG criados; Container Instance registrada e memória útil confirmada via CLI (`1913 MiB`).
 - [x] Log Group `/ecs/n8n-ec2` ativo (retenção de 7 dias).

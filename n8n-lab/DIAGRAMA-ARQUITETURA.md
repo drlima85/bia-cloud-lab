@@ -10,7 +10,7 @@ Este documento consolida a representação visual da arquitetura implantada, val
 
 ## 1. Legenda de Status dos Recursos
 
-- 🔵 **Recursos Compartilhados / Preexistentes:** Recursos de rede e governança da conta AWS compartilhados com o ecossistema BIA (`vpc-093b15ec114bc9eb2`, certificado ACM `*.bia.d2ns.com.br`, Hosted Zone Route 53 `Z0200626TQFMAZ5GPD92`).
+- 🔵 **Recursos Compartilhados / Preexistentes:** Recursos de rede e governança da conta AWS compartilhados com o ecossistema BIA (`${VPC_ID}`, certificado ACM `*.bia.d2ns.com.br`, Hosted Zone Route 53 `${ROUTE53_HOSTED_ZONE_ID}`).
 - 🟢 **Recursos Implantados e Validados (100% Ativos):** Todos os componentes exclusivos do N8N Queue Mode provisionados, conectados e auditados com sucesso nas Etapas 1 a 12.
 
 ---
@@ -24,24 +24,24 @@ flowchart TD
     
     %% Borda e Serviços Globais
     subgraph Borda ["Borda e Resolução DNS (Região us-east-2)"]
-        R53["🟢 Route 53 (Hosted Zone: Z0200626TQFMAZ5GPD92)<br/>n8n.bia.d2ns.com.br (Alias A · INSYNC)"]
+        R53["🟢 Route 53 (Hosted Zone: ${ROUTE53_HOSTED_ZONE_ID})<br/>n8n.bia.d2ns.com.br (Alias A · INSYNC)"]
         ACM["🔵 AWS Certificate Manager<br/>*.bia.d2ns.com.br (Status: ISSUED)"]
         SSM["🟢 SSM Parameter Store<br/>/n8n/valkey_token<br/>/n8n/db_password<br/>/n8n/encryption_key"]
         CW["🟢 CloudWatch Logs<br/>/ecs/n8n-ec2 (Retenção: 7 dias)<br/>streams: n8n-main e n8n-worker"]
     end
 
     %% Camada VPC
-    subgraph VPC ["🔵 VPC: vpc-093b15ec114bc9eb2 (CIDR 172.31.0.0/16)"]
-        subgraph Subnets ["🔵 Subnets Multi-AZ: subnet-0aef2d36da47e89e9 (2a) e subnet-0c9a226c460d77c8f (2b)"]
+    subgraph VPC ["🔵 VPC: ${VPC_ID} (CIDR 172.31.0.0/16)"]
+        subgraph Subnets ["🔵 Subnets Multi-AZ: ${SUBNET_2A_ID} (2a) e ${SUBNET_2B_ID} (2b)"]
             
             %% Balanceamento de Carga
             subgraph LoadBalancing ["Camada de Entrada HTTP/HTTPS"]
-                ALB["🟢 ALB: n8n-d2n-alb<br/>DNS: n8n-d2n-alb-706987622.us-east-2.elb.amazonaws.com<br/>SG: sg-0583c7b790c7b7f45 (n8n-alb)<br/>Listener HTTPS:443 (HTTP/2)"]
-                TG["🟢 Target Group: tg-n8n-d2n<br/>type: instance · path: /healthz · delay: 30s<br/>Target: i-09f7979988ba3b9b7 (Porta Dinâmica, ex. 32769 no teste · healthy)"]
+                ALB["🟢 ALB: n8n-d2n-alb<br/>DNS: ${ALB_DNS}<br/>SG: ${SG_ALB_ID} (n8n-alb)<br/>Listener HTTPS:443 (HTTP/2)"]
+                TG["🟢 Target Group: tg-n8n-d2n<br/>type: instance · path: /healthz · delay: 30s<br/>Target: ${EC2_INSTANCE_ID} (Porta Dinâmica, ex. 32769 no teste · healthy)"]
             end
 
             %% Camada de Computação ECS
-            subgraph ECS_Host ["Host EC2 ECS (t3.small · i-09f7979988ba3b9b7 · SG: sg-04ecd5e6ca63859b5 · 1.913 MiB total · 363 MiB folga de agendamento)"]
+            subgraph ECS_Host ["Host EC2 ECS (t3.small · ${EC2_INSTANCE_ID} · SG: ${SG_EC2_ID} · 1.913 MiB total · 363 MiB folga de agendamento)"]
                 subgraph ECS_Cluster ["🟢 ECS Cluster: cluster-n8n-d2n (Capacity Provider: cp-n8n-d2n)"]
                     
                     subgraph SvcMainGroup ["🟢 SERVICE: svc-n8n-main (desiredCount: 1 · running: 1)"]
@@ -58,9 +58,9 @@ flowchart TD
 
             %% Camada de Mensageria e Dados
             subgraph DadosMensageria ["Camada de Dados Persistentes e Fila"]
-                Valkey[("🟢 ElastiCache Valkey: n8n-valkey<br/>Endpoint: master.n8n-valkey.hkfaul.use2.cache.amazonaws.com:6379<br/>• Engine: Valkey 7.2 (cache.t4g.micro Single-AZ 2b)<br/>• 🔒 TLS Ativado + 🔑 AUTH Token Ativo<br/>• SG: sg-0e566f84ab4a5d213 (n8n-valkey-sg)")]
+                Valkey[("🟢 ElastiCache Valkey: n8n-valkey<br/>Endpoint: ${VALKEY_ENDPOINT}:6379<br/>• Engine: Valkey 7.2 (cache.t4g.micro Single-AZ 2b)<br/>• 🔒 TLS Ativado + 🔑 AUTH Token Ativo<br/>• SG: ${SG_VALKEY_ID} (n8n-valkey-sg)")]
                 
-                RDS[("🟢 RDS PostgreSQL: n8n<br/>Endpoint: n8n.ctekugasc68m.us-east-2.rds.amazonaws.com:5432<br/>• Engine: PostgreSQL 16.13 (db.t3.micro, 20 GB gp2)<br/>• Acesso Público: false (Privado na VPC)<br/>• SG: sg-044556529fd601827 (n8n-db)")]
+                RDS[("🟢 RDS PostgreSQL: n8n<br/>Endpoint: ${RDS_ENDPOINT}:5432<br/>• Engine: PostgreSQL 16.13 (db.t3.micro, 20 GB gp2)<br/>• Acesso Público: false (Privado na VPC)<br/>• SG: ${SG_DB_ID} (n8n-db)")]
             end
 
         end
@@ -97,9 +97,9 @@ flowchart TD
 
 | Componente | Nome Identificador | Status Efetivo | Categoria | Papel na Arquitetura |
 |---|---|---|---|---|
-| **VPC** | `vpc-093b15ec114bc9eb2` | Ativo | 🔵 Compartilhado | Rede isolada com subnets públicas em `us-east-2a` e `us-east-2b`. |
+| **VPC** | `${VPC_ID}` | Ativo | 🔵 Compartilhado | Rede isolada com subnets públicas em `us-east-2a` e `us-east-2b`. |
 | **Certificado ACM** | `*.bia.d2ns.com.br` | `ISSUED` | 🔵 Compartilhado | Terminação segura HTTPS (porta 443) no ALB com validação pública. |
-| **Route 53** | `Z0200626TQFMAZ5GPD92` | **`INSYNC`** | 🟢 Provisionado | Registro Alias A para `n8n.bia.d2ns.com.br` apontando para o ALB. |
+| **Route 53** | `${ROUTE53_HOSTED_ZONE_ID}` | **`INSYNC`** | 🟢 Provisionado | Registro Alias A para `n8n.bia.d2ns.com.br` apontando para o ALB. |
 | **Segredos SSM** | `/n8n/*` | **Disponível** | 🟢 Provisionado | Senhas do banco, chave de encriptação e AUTH token do Valkey. |
 | **Security Groups** | `n8n-alb`, `n8n-ec2`, `n8n-db`, `n8n-valkey-sg` | **Disponível** | 🟢 Provisionado | Isolamento de tráfego na VPC seguindo menor privilégio. |
 | **RDS PostgreSQL** | `n8n` (`db.t3.micro`) | **`available`** | 🟢 Provisionado | Banco relacional persistente (`16.13`), não público na porta 5432. |
@@ -107,7 +107,7 @@ flowchart TD
 | **Target Group** | `tg-n8n-d2n` | **`healthy`** | 🟢 Provisionado | Tipo instance, HTTP:5678, path `/healthz`, dynamic port mapping (porta efêmera, ex. `32769` observada no teste). |
 | **ALB** | `n8n-d2n-alb` | **`active`** | 🟢 Provisionado | Application Load Balancer internet-facing na porta HTTPS 443. |
 | **Launch Template** | `lt-n8n-d2n` (`t3.small`) | **Ativo** | 🟢 Provisionado | Template EC2 com AL2023 ECS AMI e auto-registro no cluster. |
-| **Auto Scaling Group** | `asg-n8n-d2n` | **`InService`** | 🟢 Provisionado | 1 instância `t3.small` (`i-09f7979988ba3b9b7`, 1.913 MiB RAM). |
+| **Auto Scaling Group** | `asg-n8n-d2n` | **`InService`** | 🟢 Provisionado | 1 instância `t3.small` (`${EC2_INSTANCE_ID}`, 1.913 MiB RAM). |
 | **ECS Cluster** | `cluster-n8n-d2n` | **`ACTIVE`** | 🟢 Provisionado | Cluster ECS com Capacity Provider strategy `cp-n8n-d2n`. |
 | **CloudWatch Logs** | `/ecs/n8n-ec2` | **Ativo** | 🟢 Provisionado | Retenção 7 dias; streams `n8n-main` e `n8n-worker`. |
 | **Task Defs** | `task-def-n8n-main:1` e `worker:1` | **`ACTIVE`** | 🟢 Provisionado | Especificações em modo `bridge` com limites de memória validados. |

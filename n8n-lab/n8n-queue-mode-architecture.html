@@ -215,7 +215,7 @@
         <div class="meta-info">
             <div class="meta-card">
                 <div class="meta-label">Conta AWS</div>
-                <div class="meta-val">730972069864</div>
+                <div class="meta-val">${AWS_ACCOUNT_ID}</div>
             </div>
             <div class="meta-card">
                 <div class="meta-label">Região</div>
@@ -282,7 +282,7 @@
             <!-- AWS Cloud Boundary -->
             <rect x="20" y="20" width="1320" height="880" rx="16" fill="url(#grad-aws)" stroke="#475569" stroke-width="2"/>
             <text x="50" y="55" fill="#e2e8f0" font-size="18" font-weight="700">AWS Cloud (Região us-east-2 · Ohio)</text>
-            <text x="50" y="78" fill="#94a3b8" font-size="12">Conta: 730972069864 · Projeto: BIA Cloud Lab AWS · Desafio 6</text>
+            <text x="50" y="78" fill="#94a3b8" font-size="12">Conta: ${AWS_ACCOUNT_ID} · Projeto: BIA Cloud Lab AWS · Desafio 6</text>
 
             <!-- SERVIÇOS GLOBAIS / BORDA (FORA DA VPC) -->
             <!-- Usuário Externo -->
@@ -296,7 +296,7 @@
             <text x="231" y="163" fill="white" font-size="11" font-weight="bold" text-anchor="middle">R53</text>
             <text x="250" y="164" fill="#38bdf8" font-size="12" font-weight="700">Amazon Route 53</text>
             <text x="220" y="190" fill="#94a3b8" font-size="10">n8n.bia.d2ns.com.br</text>
-            <text x="220" y="206" fill="#64748b" font-size="9">Hosted Zone: Z02006... (🔵)</text>
+            <text x="220" y="206" fill="#64748b" font-size="9">Hosted Zone: ${ROUTE53_HOSTED_ZONE_ID} (🔵)</text>
 
             <!-- ACM (Compartilhado) -->
             <rect x="210" y="260" width="150" height="80" rx="8" fill="#1e293b" stroke="#0073BB" stroke-width="2"/>
@@ -327,12 +327,12 @@
             <!-- VPC BOUNDARY -->
             <rect x="400" y="70" width="910" height="800" rx="12" fill="url(#grad-vpc)" stroke="#0073BB" stroke-width="2"/>
             <rect x="415" y="58" width="230" height="24" rx="4" fill="#0073BB"/>
-            <text x="425" y="74" fill="white" font-size="11" font-weight="700">VPC: vpc-093b15ec114bc9eb2 (🔵)</text>
+            <text x="425" y="74" fill="white" font-size="11" font-weight="700">VPC: ${VPC_ID} (🔵)</text>
             <text x="655" y="74" fill="#94a3b8" font-size="11">CIDR: 172.31.0.0/16 · Default VPC com Internet Gateway nativo</text>
 
             <!-- SUBNET 2A & 2B (Compartilhadas) -->
             <rect x="420" y="100" width="870" height="750" rx="8" fill="#030712" stroke="#334155" stroke-dasharray="4 4" stroke-width="1.5"/>
-            <text x="435" y="120" fill="#64748b" font-size="11" font-weight="600">Subnets Públicas Multi-AZ: subnet-0aef2d36da47e89e9 (us-east-2a) · subnet-0c9a226c460d77c8f (us-east-2b)</text>
+            <text x="435" y="120" fill="#64748b" font-size="11" font-weight="600">Subnets Públicas Multi-AZ: ${SUBNET_2A_ID} (us-east-2a) · ${SUBNET_2B_ID} (us-east-2b)</text>
 
             <!-- ALB (A Criar) -->
             <rect x="440" y="145" width="240" height="110" rx="8" fill="#1e293b" stroke="#FF9900" stroke-width="2"/>
@@ -391,7 +391,7 @@
             <rect x="955" y="405" width="22" height="22" rx="4" fill="#1D8102"/>
             <text x="966" y="420" fill="white" font-size="10" font-weight="bold" text-anchor="middle">V</text>
             <text x="985" y="421" fill="#4ade80" font-size="13" font-weight="700">Amazon ElastiCache Valkey (🟢)</text>
-            <text x="955" y="445" fill="#38bdf8" font-size="11" font-weight="600">master.n8n-valkey.hkfaul.use2.cache.amazonaws.com</text>
+            <text x="955" y="445" fill="#38bdf8" font-size="11" font-weight="600">${VALKEY_ENDPOINT}</text>
             <text x="955" y="468" fill="#e2e8f0" font-size="10">• Engine: <tspan fill="#38bdf8">valkey 7.2</tspan> (100% RESP / BullMQ)</text>
             <text x="955" y="488" fill="#e2e8f0" font-size="10">• Nó: <tspan fill="#38bdf8">cache.t4g.micro</tspan> (Graviton2 · 1 nó primário)</text>
             <text x="955" y="508" fill="#4ade80" font-size="10">🔒 <tspan fill="#f8fafc">Transit Encryption (TLS):</tspan> Habilitado (Porta 6379)</text>
@@ -404,11 +404,11 @@
             <rect x="955" y="635" width="22" height="22" rx="4" fill="#1D8102"/>
             <text x="966" y="650" fill="white" font-size="10" font-weight="bold" text-anchor="middle">DB</text>
             <text x="985" y="651" fill="#4ade80" font-size="13" font-weight="700">Amazon RDS PostgreSQL (🟢)</text>
-            <text x="955" y="675" fill="#38bdf8" font-size="11" font-weight="600">n8n.ctekugasc68m.us-east-2.rds.amazonaws.com</text>
+            <text x="955" y="675" fill="#38bdf8" font-size="11" font-weight="600">${RDS_ENDPOINT}</text>
             <text x="955" y="698" fill="#e2e8f0" font-size="10">• Engine: <tspan fill="#38bdf8">PostgreSQL 16.13</tspan> (Porta 5432)</text>
             <text x="955" y="718" fill="#e2e8f0" font-size="10">• Classe: <tspan fill="#38bdf8">db.t3.micro</tspan> (20 GB gp2 · Single-AZ)</text>
             <text x="955" y="738" fill="#e2e8f0" font-size="10">• Acesso Público: <tspan fill="#ef4444">false</tspan> (100% privado na VPC)</text>
-            <text x="955" y="758" fill="#94a3b8" font-size="10">SG: <tspan fill="#4ade80">sg-n8n-db (🟢)</tspan> · Subnets: default-vpc-093b15ec...</text>
+            <text x="955" y="758" fill="#94a3b8" font-size="10">SG: <tspan fill="#4ade80">sg-n8n-db (🟢)</tspan> · Subnets: default-${VPC_ID}...</text>
             <text x="955" y="778" fill="#4ade80" font-size="10">Status: AVAILABLE · Persistência perene</text>
             <text x="955" y="798" fill="#94a3b8" font-size="9">Workflows, credenciais, execuções e histórico</text>
 
@@ -457,7 +457,7 @@
                 <span class="status-pill pill-shared">Compartilhado</span>
             </h3>
             <p><strong>Domínio:</strong> <code>n8n.bia.d2ns.com.br</code></p>
-            <p><strong>Hosted Zone:</strong> <code>Z0200626TQFMAZ5GPD92</code></p>
+            <p><strong>Hosted Zone:</strong> <code>${ROUTE53_HOSTED_ZONE_ID}</code></p>
             <p><strong>Certificado ACM:</strong> Wildcard <code>*.bia.d2ns.com.br</code> em status <code>ISSUED</code>.</p>
         </div>
 
@@ -466,7 +466,7 @@
                 <span>Amazon ElastiCache Valkey</span>
                 <span class="status-pill pill-provisioned">Provisionado (Etapa 4)</span>
             </h3>
-            <p><strong>Endpoint:</strong> <code>master.n8n-valkey.hkfaul.use2.cache.amazonaws.com:6379</code></p>
+            <p><strong>Endpoint:</strong> <code>${VALKEY_ENDPOINT}:6379</code></p>
             <p><strong>Engine:</strong> Valkey 7.2 (1 nó <code>cache.t4g.micro</code> Single-AZ)</p>
             <p><strong>Segurança:</strong> TLS Ativado + AUTH Token via SSM.</p>
         </div>
@@ -476,7 +476,7 @@
                 <span>Amazon RDS PostgreSQL</span>
                 <span class="status-pill pill-provisioned">Provisionado (Etapa 3)</span>
             </h3>
-            <p><strong>Endpoint:</strong> <code>n8n.ctekugasc68m.us-east-2.rds.amazonaws.com:5432</code></p>
+            <p><strong>Endpoint:</strong> <code>${RDS_ENDPOINT}:5432</code></p>
             <p><strong>Instância:</strong> <code>db.t3.micro</code>, 20 GB gp2, PostgreSQL 16.13</p>
             <p><strong>Segurança:</strong> Não público (100% privado na VPC), SG <code>n8n-db</code>.</p>
         </div>
@@ -495,8 +495,8 @@
                 <span>ALB &amp; Target Group</span>
                 <span class="status-pill pill-provisioned">Implantado e Validado</span>
             </h3>
-            <p><strong>Load Balancer:</strong> <code>n8n-d2n-alb</code> (DNS: <code>n8n-d2n-alb-706987622.us-east-2.elb.amazonaws.com</code>).</p>
-            <p><strong>Target Group:</strong> <code>tg-n8n-d2n</code> tipo <code>instance</code> com dynamic port mapping (Target: <code>i-09f7979988ba3b9b7</code> com porta efêmera dinâmica, ex. <code>32769</code> observada no teste, status <code>healthy</code>).</p>
+            <p><strong>Load Balancer:</strong> <code>n8n-d2n-alb</code> (DNS: <code>${ALB_DNS}</code>).</p>
+            <p><strong>Target Group:</strong> <code>tg-n8n-d2n</code> tipo <code>instance</code> com dynamic port mapping (Target: <code>${EC2_INSTANCE_ID}</code> com porta efêmera dinâmica, ex. <code>32769</code> observada no teste, status <code>healthy</code>).</p>
         </div>
 
         <div class="card-detail provisioned">
@@ -504,7 +504,7 @@
                 <span>ECS EC2 Host &amp; Services</span>
                 <span class="status-pill pill-provisioned">Implantado e Validado</span>
             </h3>
-            <p><strong>EC2 Host:</strong> 1x <code>t3.small</code> (<code>i-09f7979988ba3b9b7</code>, 1.913 MiB registrados no ECS, 363 MiB de capacidade residual de agendamento).</p>
+            <p><strong>EC2 Host:</strong> 1x <code>t3.small</code> (<code>${EC2_INSTANCE_ID}</code>, 1.913 MiB registrados no ECS, 363 MiB de capacidade residual de agendamento).</p>
             <p><strong>Services:</strong> <code>svc-n8n-main</code> (1 task UI) + <code>svc-n8n-worker</code> (2 tasks workers em Queue Mode).</p>
         </div>
     </div>

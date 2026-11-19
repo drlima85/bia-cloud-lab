@@ -4,7 +4,7 @@
 **Módulo:** Desafio 6 — Orquestração Escalável de N8N em Fila Distribuída  
 **Região AWS:** `us-east-2` (Ohio)  
 **Versão do N8N:** `n8nio/n8n:2.22.6` (Docker Hub, x86_64)  
-**Status:** Implantação concluída, validada e homologada com testes de resiliência  
+**Status:** Laboratório concluído, implantado e validado na AWS, com testes práticos de resiliência e processamento assíncrono. Ambiente desprovisionado após a conclusão dos testes para evitar custos recorrentes.
 
 ---
 
@@ -92,6 +92,9 @@ O **Desafio 6** representa a evolução arquitetural da plataforma de automaçã
 
 ## 3. Recursos Provisionados e Validados na AWS
 
+> [!NOTE]
+> Os recursos e estados apresentados nesta seção representam o ambiente durante a homologação. Após a conclusão dos testes, a infraestrutura exclusiva do laboratório foi desprovisionada. Os estados RUNNING, ACTIVE e available são registros históricos, não condições atuais.
+
 Todos os recursos foram implantados com sucesso na região `us-east-2` (Ohio):
 
 | Recurso AWS | Identificador / Nome | Especificação Técnica | Status |
@@ -101,7 +104,7 @@ Todos os recursos foram implantados com sucesso na região `us-east-2` (Ohio):
 | **Application Load Balancer** | `n8n-d2n-alb` | Internet-facing, subnets públicas `2a` e `2b`, HTTPS:443 | **`active`** |
 | **Target Group** | `tg-n8n-d2n` | Tipo `instance`, porta dinâmica do host (ex. `32769` observada no teste), path `/healthz` | **`healthy`** |
 | **Auto Scaling Group** | `asg-n8n-d2n` | `min=1`, `max=1`, `desired=1` (AMI AL2023 ECS-Optimized) | **`InService`** |
-| **Host EC2 ECS** | Instância `t3.small` (`i-09f7979988ba3b9b7`) | 2 vCPU, 2 GB RAM (1.913 MiB registradas, 363 MiB de capacidade residual de agendamento) | **`ACTIVE`** |
+| **Host EC2 ECS** | Instância `t3.small` (`${EC2_INSTANCE_ID}`) | 2 vCPU, 2 GB RAM (1.913 MiB registradas, 363 MiB de capacidade residual de agendamento) | **`ACTIVE`** |
 | **ECS Cluster** | `cluster-n8n-d2n` | Capacity Provider `cp-n8n-d2n` associado como default | **`ACTIVE`** |
 | **ECS Service Main** | `svc-n8n-main` | `task-def-n8n-main:1` (1 task ativa com porta dinâmica do host, ex. `32769` no teste) | **`RUNNING`** |
 | **ECS Service Worker** | `svc-n8n-worker` | `task-def-n8n-worker:1` (2 tasks ativas sem ALB) | **`RUNNING`** |
@@ -170,8 +173,8 @@ Para eliminar quaisquer custos residuais pós-validação, a desmontagem deve se
 | **Balanceamento** | Listener HTTPS:443, ALB `n8n-d2n-alb` e Target Group `tg-n8n-d2n` | ALB `bia-cloud-alb` e Target Groups da BIA |
 | **Fila e Cache** | Cluster ElastiCache `n8n-valkey` e Subnet Group `n8n-valkey-subgrp` | Nenhum (exclusivo do N8N) |
 | **Banco de Dados** | RDS PostgreSQL `n8n` (`--skip-final-snapshot`) | Bancos de dados RDS da aplicação BIA |
-| **DNS Route 53** | Somente o registro Alias A `n8n.bia.d2ns.com.br` | **PRESERVAR** Hosted Zone `Z0200626TQFMAZ5GPD92` e registros `bia.d2ns.com.br` |
-| **Rede & Segurança** | SGs `n8n-valkey-sg`, `n8n-db`, `n8n-ec2` e `n8n-alb` | **PRESERVAR** VPC `vpc-093b15ec114bc9eb2`, Subnets, IGW, Route Tables e Certificado ACM `*.bia.d2ns.com.br` |
+| **DNS Route 53** | Somente o registro Alias A `n8n.bia.d2ns.com.br` | **PRESERVAR** Hosted Zone `${ROUTE53_HOSTED_ZONE_ID}` e registros `bia.d2ns.com.br` |
+| **Rede & Segurança** | SGs `n8n-valkey-sg`, `n8n-db`, `n8n-ec2` e `n8n-alb` | **PRESERVAR** VPC `${VPC_ID}`, Subnets, IGW, Route Tables e Certificado ACM `*.bia.d2ns.com.br` |
 | **Logs e Segredos** | Log Group `/ecs/n8n-ec2` e Parâmetros `/n8n/*` (se não reutilizados) | Log Groups e parâmetros SSM da BIA |
 
 ### Ordem Sequencial de Desmontagem via AWS CLI
@@ -192,11 +195,11 @@ aws ecs delete-capacity-provider --capacity-provider cp-n8n-d2n --region us-east
 aws ecs delete-cluster --cluster cluster-n8n-d2n --region us-east-2 --profile n8n-lab
 
 # 4. Excluir Launch Template
-aws ec2 delete-launch-template --launch-template-id lt-0f379fbb524ea5793 --region us-east-2 --profile n8n-lab
+aws ec2 delete-launch-template --launch-template-id "${LAUNCH_TEMPLATE_ID}" --region us-east-2 --profile n8n-lab
 
 # 5. Excluir ALB e Target Group
-aws elbv2 delete-load-balancer --load-balancer-arn arn:aws:elasticloadbalancing:us-east-2:730972069864:loadbalancer/app/n8n-d2n-alb/4864a22397613b4a --region us-east-2 --profile n8n-lab
-aws elbv2 delete-target-group --target-group-arn arn:aws:elasticloadbalancing:us-east-2:730972069864:targetgroup/tg-n8n-d2n/ae88c59f2e5de42a --region us-east-2 --profile n8n-lab
+aws elbv2 delete-load-balancer --load-balancer-arn "${ALB_ARN}" --region us-east-2 --profile n8n-lab
+aws elbv2 delete-target-group --target-group-arn "${TARGET_GROUP_ARN}" --region us-east-2 --profile n8n-lab
 
 # 6. Excluir ElastiCache Valkey
 aws elasticache delete-replication-group --replication-group-id n8n-valkey --region us-east-2 --profile n8n-lab
@@ -209,10 +212,10 @@ aws rds delete-db-instance --db-instance-identifier n8n --skip-final-snapshot --
 # (via change-resource-record-sets com Action: DELETE)
 
 # 9. Excluir Security Groups exclusivos
-aws ec2 delete-security-group --group-id sg-0e566f84ab4a5d213 --region us-east-2 --profile n8n-lab # n8n-valkey-sg
-aws ec2 delete-security-group --group-id sg-044556529fd601827 --region us-east-2 --profile n8n-lab # n8n-db
-aws ec2 delete-security-group --group-id sg-04ecd5e6ca63859b5 --region us-east-2 --profile n8n-lab # n8n-ec2
-aws ec2 delete-security-group --group-id sg-0583c7b790c7b7f45 --region us-east-2 --profile n8n-lab # n8n-alb
+aws ec2 delete-security-group --group-id "${SG_VALKEY_ID}" --region us-east-2 --profile n8n-lab # n8n-valkey-sg
+aws ec2 delete-security-group --group-id "${SG_DB_ID}" --region us-east-2 --profile n8n-lab # n8n-db
+aws ec2 delete-security-group --group-id "${SG_EC2_ID}" --region us-east-2 --profile n8n-lab # n8n-ec2
+aws ec2 delete-security-group --group-id "${SG_ALB_ID}" --region us-east-2 --profile n8n-lab # n8n-alb
 
 # 10. Excluir CloudWatch Log Group
 aws logs delete-log-group --log-group-name /ecs/n8n-ec2 --region us-east-2 --profile n8n-lab
