@@ -186,6 +186,11 @@ body {
   background: var(--accent-success);
 }
 
+/* Nova versão - botão roxo */
+.btn.purple {
+  background: #9333ea;
+}
+
 .btn-block {
   width: 100%;
   justify-content: center;
