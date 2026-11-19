@@ -1,7 +1,7 @@
 {
-  "name": "bia",
+  "name": "bia-cloud-lab",
   "version": "4.2.0",
-  "description": "### Período do evento: 31/01 a 01/02/2026 (Online e ao vivo das 9h30 às 17h30)",
+  "description": "BIA Cloud Lab — Laboratórios práticos de computação em nuvem AWS, contêineres ECS, automação com n8n e IA generativa (Ambiente D2NS)",
   "main": "index.js",
   "scripts": {
     "test": "jest tests/unit",
@@ -10,14 +10,17 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/henrylle/bia.git"
+    "url": "git+https://github.com/drlima85/bia-cloud-lab.git"
   },
-  "author": "",
+  "author": "Danilo Lima — D2NS (implementações e adaptações)",
+  "contributors": [
+    "Henrylle Maia (Formação AWS — autor do projeto-base original BIA)"
+  ],
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/henrylle/bia/issues"
+    "url": "https://github.com/drlima85/bia-cloud-lab/issues"
   },
-  "homepage": "https://github.com/henrylle/bia#readme",
+  "homepage": "https://github.com/drlima85/bia-cloud-lab#readme",
   "dependencies": {
     "@aws-sdk/client-secrets-manager": "^3.583.0",
     "@aws-sdk/client-sts": "^3.583.0",

@@ -76,3 +76,6 @@ n8n-lab/*.bak
 /docs/README-acesso.md
 /docs/acesso.md
 /docs/resumo-n8n.md
+
+# ECS Task Definitions operacionais com dados sensíveis
+/task-def-bia-cloud-alb-v2.json
