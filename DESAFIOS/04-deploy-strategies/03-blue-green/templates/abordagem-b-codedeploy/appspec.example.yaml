@@ -1,0 +1,15 @@
+version: 0.0
+Resources:
+  - TargetService:
+      Type: AWS::ECS::Service
+      Properties:
+        TaskDefinition: "arn:aws:ecs:${AWS_REGION}:${AWS_ACCOUNT_ID}:task-definition/task-def-bia:${NEW_REVISION}"
+        LoadBalancerInfo:
+          ContainerName: "bia-cloud-app"
+          ContainerPort: 8080
+Hooks:
+  - BeforeInstall: "LambdaFunctionValidatePreconditions"
+  - AfterInstall: "LambdaFunctionValidateDeployment"
+  - AfterAllowTestTraffic: "LambdaFunctionRunSmokeTests"
+  - BeforeAllowTraffic: "LambdaFunctionPrepareProductionCutover"
+  - AfterAllowTraffic: "LambdaFunctionValidateProductionTraffic"

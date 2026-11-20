@@ -1,0 +1,23 @@
+{
+  "listenerArn": "arn:aws:elasticloadbalancing:${AWS_REGION}:${AWS_ACCOUNT_ID}:listener/app/${ALB_NAME}/${ALB_ID}/${LISTENER_ID}",
+  "defaultActions": [
+    {
+      "type": "forward",
+      "forwardConfig": {
+        "targetGroups": [
+          {
+            "targetGroupArn": "arn:aws:elasticloadbalancing:${AWS_REGION}:${AWS_ACCOUNT_ID}:targetgroup/tg-bia-blue/${TG_BLUE_ID}",
+            "weight": 90
+          },
+          {
+            "targetGroupArn": "arn:aws:elasticloadbalancing:${AWS_REGION}:${AWS_ACCOUNT_ID}:targetgroup/tg-bia-green/${TG_GREEN_ID}",
+            "weight": 10
+          }
+        ],
+        "targetGroupStickinessConfig": {
+          "enabled": false
+        }
+      }
+    }
+  ]
+}

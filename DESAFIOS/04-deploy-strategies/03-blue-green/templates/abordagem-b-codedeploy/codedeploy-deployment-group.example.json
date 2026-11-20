@@ -1,0 +1,61 @@
+{
+  "applicationName": "AppECS-cluster-bia-service-bia",
+  "deploymentGroupName": "DgpECS-cluster-bia-service-bia",
+  "deploymentConfigName": "CodeDeployDefault.ECSLinear10PercentEvery1Minute",
+  "serviceRoleArn": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/ecsCodeDeployRole",
+  "blueGreenDeploymentConfiguration": {
+    "terminateBlueInstancesOnDeploymentSuccess": {
+      "action": "TERMINATE",
+      "terminationWaitTimeInMinutes": 5
+    },
+    "deploymentReadyOption": {
+      "actionOnTimeout": "CONTINUE_DEPLOYMENT"
+    }
+  },
+  "ecsServices": [
+    {
+      "serviceName": "service-bia",
+      "clusterName": "cluster-bia"
+    }
+  ],
+  "loadBalancerInfo": {
+    "targetGroupPairInfoList": [
+      {
+        "targetGroups": [
+          {
+            "name": "tg-bia-blue"
+          },
+          {
+            "name": "tg-bia-green"
+          }
+        ],
+        "prodTrafficRoute": {
+          "listenerArns": [
+            "arn:aws:elasticloadbalancing:${AWS_REGION}:${AWS_ACCOUNT_ID}:listener/app/${ALB_NAME}/${ALB_ID}/${PROD_LISTENER_PORT_80_ID}"
+          ]
+        },
+        "testTrafficRoute": {
+          "listenerArns": [
+            "arn:aws:elasticloadbalancing:${AWS_REGION}:${AWS_ACCOUNT_ID}:listener/app/${ALB_NAME}/${ALB_ID}/${TEST_LISTENER_PORT_8080_ID}"
+          ]
+        }
+      }
+    ]
+  },
+  "autoRollbackConfiguration": {
+    "enabled": true,
+    "events": [
+      "DEPLOYMENT_FAILURE",
+      "DEPLOYMENT_STOP_ON_ALARM"
+    ]
+  },
+  "alarmConfiguration": {
+    "enabled": true,
+    "ignorePollAlarmFailure": false,
+    "alarms": [
+      {
+        "name": "alarm-bia-alb-5xx-high"
+      }
+    ]
+  }
+}

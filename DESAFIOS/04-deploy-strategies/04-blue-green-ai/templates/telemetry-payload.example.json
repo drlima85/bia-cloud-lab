@@ -1,0 +1,52 @@
+{
+  "deploymentId": "d-ABC123XYZ",
+  "application": "bia-cloud-app",
+  "timestamp": "2026-11-19T15:30:00Z",
+  "evaluationWindowMinutes": 5,
+  "trafficDistribution": {
+    "bluePercent": 90,
+    "greenPercent": 10
+  },
+  "metrics": {
+    "blue": {
+      "targetGroupName": "tg-bia-blue",
+      "healthyHostCount": 2,
+      "unhealthyHostCount": 0,
+      "requestCount": 1540,
+      "http2xxCount": 1532,
+      "http4xxCount": 8,
+      "http5xxCount": 0,
+      "errorRatePercent": 0.0,
+      "latencyP50Ms": 42.5,
+      "latencyP95Ms": 85.0,
+      "latencyP99Ms": 140.2,
+      "avgCpuUtilizationPercent": 18.4,
+      "avgMemoryUtilizationPercent": 32.1
+    },
+    "green": {
+      "targetGroupName": "tg-bia-green",
+      "healthyHostCount": 2,
+      "unhealthyHostCount": 0,
+      "requestCount": 172,
+      "http2xxCount": 171,
+      "http4xxCount": 1,
+      "http5xxCount": 0,
+      "errorRatePercent": 0.0,
+      "latencyP50Ms": 44.1,
+      "latencyP95Ms": 88.3,
+      "latencyP99Ms": 145.0,
+      "avgCpuUtilizationPercent": 21.0,
+      "avgMemoryUtilizationPercent": 34.5
+    }
+  },
+  "logAnalysis": {
+    "logGroupName": "/ecs/task-def-bia",
+    "greenSampleErrors": [],
+    "greenSampleWarnings": [
+      {
+        "timestamp": "2026-11-19T15:28:12Z",
+        "message": "[WARN] Cache miss for key 'config_tenant_default', resolving from DB"
+      }
+    ]
+  }
+}

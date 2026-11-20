@@ -1,0 +1,25 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "CloudWatchLogs",
+      "Effect": "Allow",
+      "Action": [
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+      ],
+      "Resource": "arn:aws:logs:us-east-2:<AWS_ACCOUNT_ID>:log-group:/ecs/n8n-ec2:*"
+    },
+    {
+      "Sid": "SSMSecrets",
+      "Effect": "Allow",
+      "Action": "ssm:GetParameters",
+      "Resource": [
+        "arn:aws:ssm:us-east-2:<AWS_ACCOUNT_ID>:parameter/n8n/db_password",
+        "arn:aws:ssm:us-east-2:<AWS_ACCOUNT_ID>:parameter/n8n/encryption_key",
+        "arn:aws:ssm:us-east-2:<AWS_ACCOUNT_ID>:parameter/n8n/valkey_token"
+      ]
+    }
+  ]
+}

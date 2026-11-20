@@ -1,0 +1,13 @@
+# Materiais didáticos e proprietários da Formação AWS (preservados localmente)
+shared/prompts/prompt-valendo-Danilo.txt
+05-rag-knowledge-base/knowledge-base/imersao/comparativo-produtos-imersao-formacao.md
+
+# Scripts derivados de laboratórios práticos (aguardando autorização de redistribuição)
+03-bedrock-chat/cli/*.sh
+03-bedrock-chat/sdk/*.mjs
+04-bedrock-tools/*.mjs
+05-rag-knowledge-base/*.mjs
+06-guardrails/*.sh
+06-guardrails/*.mjs
+package.json
+package-lock.json

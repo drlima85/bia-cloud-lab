@@ -1,0 +1,32 @@
+{
+  "cluster": "cluster-bia",
+  "serviceName": "service-bia",
+  "taskDefinition": "task-def-bia:1",
+  "desiredCount": 2,
+  "launchType": "FARGATE",
+  "platformVersion": "LATEST",
+  "networkConfiguration": {
+    "awsvpcConfiguration": {
+      "subnets": [
+        "${SUBNET_1_ID}",
+        "${SUBNET_2_ID}"
+      ],
+      "securityGroups": [
+        "${APP_SECURITY_GROUP_ID}"
+      ],
+      "assignPublicIp": "DISABLED"
+    }
+  },
+  "loadBalancers": [
+    {
+      "targetGroupArn": "arn:aws:elasticloadbalancing:${AWS_REGION}:${AWS_ACCOUNT_ID}:targetgroup/tg-bia-blue/${TG_BLUE_ID}",
+      "containerName": "bia-cloud-app",
+      "containerPort": 8080
+    }
+  ],
+  "deploymentController": {
+    "type": "CODE_DEPLOY"
+  },
+  "healthCheckGracePeriodSeconds": 60,
+  "enableExecuteCommand": true
+}

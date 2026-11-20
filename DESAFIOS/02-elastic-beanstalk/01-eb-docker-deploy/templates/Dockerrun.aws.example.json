@@ -1,0 +1,12 @@
+{
+  "AWSEBDockerrunVersion": "1",
+  "Image": {
+    "Name": "<SUA_CONTA_AWS>.dkr.ecr.<SUA_REGIAO_AWS>.amazonaws.com/bia:<TAG_DA_IMAGEM>",
+    "Update": "true"
+  },
+  "Ports": [
+    {
+      "ContainerPort": "8080"
+    }
+  ]
+}

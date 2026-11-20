@@ -1,0 +1,86 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "SSMPublicECSAMI",
+      "Effect": "Allow",
+      "Action": "ssm:GetParameter",
+      "Resource": "arn:aws:ssm:us-east-2::parameter/aws/service/ecs/*"
+    },
+    {
+      "Sid": "SSMDescribeParameters",
+      "Effect": "Allow",
+      "Action": "ssm:DescribeParameters",
+      "Resource": "*"
+    },
+    {
+      "Sid": "RDSPreValidation",
+      "Effect": "Allow",
+      "Action": [
+        "rds:DescribeOrderableDBInstanceOptions",
+        "rds:DescribeDBSubnetGroups",
+        "rds:DescribeDBEngineVersions"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "EC2PreValidation",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:DescribeImages",
+        "ec2:DescribeLaunchTemplates",
+        "ec2:DescribeLaunchTemplateVersions",
+        "ec2:DescribeNetworkInterfaces",
+        "ec2:DescribeVpcAttribute",
+        "ec2:DescribeInstanceTypes"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "ECSPreValidation",
+      "Effect": "Allow",
+      "Action": [
+        "ecs:ListContainerInstances",
+        "ecs:DescribeContainerInstances",
+        "ecs:ListTasks",
+        "ecs:DescribeTasks"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "IAMReadN8N",
+      "Effect": "Allow",
+      "Action": [
+        "iam:GetRole",
+        "iam:GetRolePolicy",
+        "iam:ListAttachedRolePolicies",
+        "iam:ListRolePolicies",
+        "iam:GetInstanceProfile",
+        "iam:ListInstanceProfilesForRole"
+      ],
+      "Resource": [
+        "arn:aws:iam::<AWS_ACCOUNT_ID>:role/n8n-*",
+        "arn:aws:iam::<AWS_ACCOUNT_ID>:instance-profile/n8n-*"
+      ]
+    },
+    {
+      "Sid": "CloudWatchLogsDescribe",
+      "Effect": "Allow",
+      "Action": "logs:DescribeLogGroups",
+      "Resource": "*"
+    },
+    {
+      "Sid": "CloudWatchLogsReadN8N",
+      "Effect": "Allow",
+      "Action": [
+        "logs:DescribeLogStreams",
+        "logs:FilterLogEvents",
+        "logs:GetLogEvents"
+      ],
+      "Resource": [
+        "arn:aws:logs:us-east-2:<AWS_ACCOUNT_ID>:log-group:/ecs/n8n-ec2",
+        "arn:aws:logs:us-east-2:<AWS_ACCOUNT_ID>:log-group:/ecs/n8n-ec2:*"
+      ]
+    }
+  ]
+}

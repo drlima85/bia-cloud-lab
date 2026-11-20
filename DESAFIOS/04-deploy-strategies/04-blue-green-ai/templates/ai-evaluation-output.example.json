@@ -1,0 +1,22 @@
+{
+  "evaluationId": "eval-20261119-153015",
+  "deploymentId": "d-ABC123XYZ",
+  "status": "APPROVE",
+  "confidenceScore": 94,
+  "riskLevel": "LOW",
+  "metricsSummary": {
+    "latencyComparison": "A latência p95 da versão Green (88.3ms) está estatisticamente equivalente à da versão Blue (85.0ms), variação de apenas +3.8%, dentro da tolerância aceitável de 15%.",
+    "errorRateComparison": "Zero erros HTTP 5XX observados em ambas as versões. A taxa de erros 4XX na versão Green (0.58%) é compatível com o comportamento histórico de produção.",
+    "healthStatus": "Ambos os Target Groups apresentam 100% dos hosts saudáveis (2/2 em cada grupo)."
+  },
+  "detectedAnomalies": [
+    "Aviso isolado de cache miss registrado nos logs da versão Green durante a inicialização, sem impacto na latência global."
+  ],
+  "recommendation": "A versão Green demonstrou estabilidade de telemetria durante a janela de observação de 5 minutos com 10% de tráfego. Recomenda-se avançar para o próximo estágio de tráfego (50% ou 100%).",
+  "humanReviewRequired": true,
+  "auditMetadata": {
+    "modelId": "anthropic.claude-3-5-sonnet-20241022-v2:0",
+    "evaluatedAt": "2026-11-19T15:30:15Z",
+    "hardGuardrailsPassed": true
+  }
+}

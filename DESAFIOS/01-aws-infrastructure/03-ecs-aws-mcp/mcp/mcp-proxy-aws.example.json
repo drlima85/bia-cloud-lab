@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "aws-mcp": {
+      "command": "uvx",
+      "args": [
+        "mcp-proxy-for-aws@latest",
+        "https://aws-mcp.<REGIAO_DO_MCP_SERVER>.api.aws/mcp",
+        "--metadata",
+        "AWS_REGION=<SUA_REGIAO_AWS>"
+      ],
+      "env": {
+        "AWS_PROFILE": "<SEU_PERFIL_AWS>",
+        "AWS_DEFAULT_REGION": "<SUA_REGIAO_AWS>"
+      }
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "_comment": "Managed policies a serem anexadas à role n8n-ec2-instance-role via console IAM ou AWS CLI.",
+  "_note": "Este arquivo é um guia de referência estruturado com as políticas gerenciadas necessárias.",
+  "role_name": "n8n-ec2-instance-role",
+  "managed_policies": [
+    {
+      "policy_name": "AmazonEC2ContainerServiceforEC2Role",
+      "policy_arn": "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role",
+      "purpose": "Permite que a instância EC2 registre-se no cluster ECS, receba e execute tasks, reporte saúde e realize pull de imagens via Docker daemon."
+    },
+    {
+      "policy_name": "AmazonSSMManagedInstanceCore",
+      "policy_arn": "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore",
+      "purpose": "Habilita acesso à instância via SSM Session Manager sem necessidade de SSH ou par de chaves exposto."
+    }
+  ],
+  "cli_commands": [
+    "aws iam attach-role-policy --role-name n8n-ec2-instance-role --policy-arn arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role --region us-east-2",
+    "aws iam attach-role-policy --role-name n8n-ec2-instance-role --policy-arn arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore --region us-east-2"
+  ]
+}

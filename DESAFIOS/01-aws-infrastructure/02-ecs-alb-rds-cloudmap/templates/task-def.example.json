@@ -1,0 +1,83 @@
+{
+  "family": "task-def-bia-app",
+  "executionRoleArn": "arn:aws:iam::<SUA_CONTA_AWS>:role/ecsTaskExecutionRole",
+  "networkMode": "awsvpc",
+  "containerDefinitions": [
+    {
+      "name": "bia-cloud-app",
+      "image": "<SUA_CONTA_AWS>.dkr.ecr.<SUA_REGIAO_AWS>.amazonaws.com/bia-cloud-lab:latest",
+      "cpu": 512,
+      "memory": 1024,
+      "memoryReservation": 512,
+      "portMappings": [
+        {
+          "containerPort": 8080,
+          "hostPort": 8080,
+          "protocol": "tcp",
+          "name": "bia-http-port",
+          "appProtocol": "http"
+        }
+      ],
+      "essential": true,
+      "environment": [
+        {
+          "name": "CACHE_TLS",
+          "value": "false"
+        },
+        {
+          "name": "CACHE_TTL",
+          "value": "30"
+        },
+        {
+          "name": "DB_PORT",
+          "value": "5432"
+        },
+        {
+          "name": "DB_USER",
+          "value": "postgres"
+        },
+        {
+          "name": "CACHE_PORT",
+          "value": "6379"
+        },
+        {
+          "name": "CACHE_ENDPOINT",
+          "value": "<SEU_ENDPOINT_ELASTICACHE_VALKEY>"
+        },
+        {
+          "name": "DB_HOST",
+          "value": "<SEU_ENDPOINT_RDS_POSTGRES>"
+        }
+      ],
+      "secrets": [
+        {
+          "name": "DB_PWD",
+          "valueFrom": "arn:aws:ssm:<SUA_REGIAO_AWS>:<SUA_CONTA_AWS>:parameter/bia/db/password"
+        }
+      ],
+      "mountPoints": [],
+      "volumesFrom": [],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/task-def-bia-cloud-alb",
+          "awslogs-create-group": "true",
+          "awslogs-region": "<SUA_REGIAO_AWS>",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "systemControls": []
+    }
+  ],
+  "volumes": [],
+  "placementConstraints": [],
+  "requiresCompatibilities": [
+    "EC2"
+  ],
+  "cpu": "1024",
+  "memory": "1024",
+  "runtimePlatform": {
+    "cpuArchitecture": "X86_64",
+    "operatingSystemFamily": "LINUX"
+  }
+}

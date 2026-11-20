@@ -1,0 +1,15 @@
+# Modelo didático sanitizado de Docker Compose para AWS Elastic Beanstalk
+# Plataforma: Docker running on 64bit Amazon Linux 2023 (ou AL2)
+# ATENÇÃO: Substitua os placeholders antes de gerar o pacote de release final.
+
+services:
+  server:
+    image: <SUA_CONTA_AWS>.dkr.ecr.<SUA_REGIAO_AWS>.amazonaws.com/bia:${TAG}
+    container_name: bia
+    ports:
+      - "80:8080"
+    environment:
+      DB_USER: postgres
+      DB_PWD: ${DB_PWD}
+      DB_PORT: 5432
+      DB_HOST: <SEU_ENDPOINT_RDS_POSTGRES>

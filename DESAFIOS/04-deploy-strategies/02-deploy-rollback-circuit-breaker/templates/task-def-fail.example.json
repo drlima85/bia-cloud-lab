@@ -1,0 +1,73 @@
+{
+  "family": "task-def-bia",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": [
+    "FARGATE",
+    "EC2"
+  ],
+  "cpu": "512",
+  "memory": "1024",
+  "executionRoleArn": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/ecsTaskRole",
+  "containerDefinitions": [
+    {
+      "name": "bia-cloud-app",
+      "image": "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/bia:simulated-fail",
+      "cpu": 512,
+      "memory": 1024,
+      "essential": true,
+      "command": [
+        "sh",
+        "-c",
+        "echo '[SIMULACAO] Falha crítica de inicialização provocada para teste de Circuit Breaker' && exit 1"
+      ],
+      "portMappings": [
+        {
+          "containerPort": 8080,
+          "hostPort": 8080,
+          "protocol": "tcp",
+          "appProtocol": "http"
+        }
+      ],
+      "environment": [
+        {
+          "name": "PORT",
+          "value": "8080"
+        },
+        {
+          "name": "DB_HOST",
+          "value": "${DB_HOST}"
+        },
+        {
+          "name": "SIMULATE_FAILURE",
+          "value": "true"
+        }
+      ],
+      "secrets": [
+        {
+          "name": "DB_PWD",
+          "valueFrom": "arn:aws:ssm:${AWS_REGION}:${AWS_ACCOUNT_ID}:parameter/bia/db_password"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/task-def-bia",
+          "awslogs-region": "${AWS_REGION}",
+          "awslogs-stream-prefix": "ecs-fail-test",
+          "awslogs-create-group": "true"
+        }
+      },
+      "healthCheck": {
+        "command": [
+          "CMD-SHELL",
+          "exit 1"
+        ],
+        "interval": 5,
+        "timeout": 2,
+        "retries": 1,
+        "startPeriod": 0
+      }
+    }
+  ]
+}

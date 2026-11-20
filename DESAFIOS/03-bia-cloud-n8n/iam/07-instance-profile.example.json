@@ -1,0 +1,22 @@
+{
+  "_comment": "Guia de criação do Instance Profile e associação à role. Não é um documento de política IAM isolado.",
+  "_note": "Um Instance Profile é o contêiner que a instância EC2 utiliza para assumir uma IAM Role. Deve ser criado separadamente da role.",
+  "instance_profile_name": "n8n-ec2-instance-profile",
+  "role_to_associate": "n8n-ec2-instance-role",
+  "cli_commands": [
+    "aws iam create-instance-profile --instance-profile-name n8n-ec2-instance-profile --region us-east-2",
+    "aws iam add-role-to-instance-profile --instance-profile-name n8n-ec2-instance-profile --role-name n8n-ec2-instance-role --region us-east-2"
+  ],
+  "console_steps": [
+    "1. No console IAM, acesse Roles > n8n-ec2-instance-role.",
+    "2. Na aba 'Instance profile', o profile é criado automaticamente quando a role é gerada com o assistente do serviço EC2.",
+    "3. Se criando via CLI, execute os dois comandos acima na ordem indicada.",
+    "4. O ARN do instance profile terá o formato: arn:aws:iam::<AWS_ACCOUNT_ID>:instance-profile/n8n-ec2-instance-profile.",
+    "5. Este ARN deve ser referenciado no Launch Template do ECS."
+  ],
+  "usage_in_launch_template": {
+    "IamInstanceProfile": {
+      "Arn": "arn:aws:iam::<AWS_ACCOUNT_ID>:instance-profile/n8n-ec2-instance-profile"
+    }
+  }
+}

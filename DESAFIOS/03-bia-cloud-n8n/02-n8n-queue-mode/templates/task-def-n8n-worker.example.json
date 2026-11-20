@@ -1,0 +1,94 @@
+{
+  "family": "task-def-n8n-worker",
+  "networkMode": "bridge",
+  "requiresCompatibilities": [
+    "EC2"
+  ],
+  "executionRoleArn": "arn:aws:iam::<SUA_CONTA_AWS>:role/n8n-task-execution-role",
+  "containerDefinitions": [
+    {
+      "name": "n8n-worker",
+      "image": "n8nio/n8n:2.22.6",
+      "command": [
+        "worker",
+        "--concurrency=5"
+      ],
+      "memoryReservation": 450,
+      "memory": 550,
+      "essential": true,
+      "portMappings": [],
+      "environment": [
+        {
+          "name": "DB_TYPE",
+          "value": "postgresdb"
+        },
+        {
+          "name": "DB_POSTGRESDB_HOST",
+          "value": "<SEU_ENDPOINT_RDS_POSTGRES>"
+        },
+        {
+          "name": "DB_POSTGRESDB_PORT",
+          "value": "5432"
+        },
+        {
+          "name": "DB_POSTGRESDB_DATABASE",
+          "value": "n8n"
+        },
+        {
+          "name": "DB_POSTGRESDB_USER",
+          "value": "postgres"
+        },
+        {
+          "name": "DB_POSTGRESDB_SSL_ENABLED",
+          "value": "true"
+        },
+        {
+          "name": "DB_POSTGRESDB_SSL_REJECT_UNAUTHORIZED",
+          "value": "false"
+        },
+        {
+          "name": "GENERIC_TIMEZONE",
+          "value": "America/Sao_Paulo"
+        },
+        {
+          "name": "EXECUTIONS_MODE",
+          "value": "queue"
+        },
+        {
+          "name": "QUEUE_BULL_REDIS_HOST",
+          "value": "<SEU_ENDPOINT_ELASTICACHE_VALKEY>"
+        },
+        {
+          "name": "QUEUE_BULL_REDIS_PORT",
+          "value": "6379"
+        },
+        {
+          "name": "QUEUE_BULL_REDIS_TLS",
+          "value": "true"
+        }
+      ],
+      "secrets": [
+        {
+          "name": "DB_POSTGRESDB_PASSWORD",
+          "valueFrom": "arn:aws:ssm:<SUA_REGIAO_AWS>:<SUA_CONTA_AWS>:parameter/n8n/db_password"
+        },
+        {
+          "name": "N8N_ENCRYPTION_KEY",
+          "valueFrom": "arn:aws:ssm:<SUA_REGIAO_AWS>:<SUA_CONTA_AWS>:parameter/n8n/encryption_key"
+        },
+        {
+          "name": "QUEUE_BULL_REDIS_PASSWORD",
+          "valueFrom": "arn:aws:ssm:<SUA_REGIAO_AWS>:<SUA_CONTA_AWS>:parameter/n8n/valkey_token"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/n8n-ec2",
+          "awslogs-region": "<SUA_REGIAO_AWS>",
+          "awslogs-stream-prefix": "n8n-worker"
+        }
+      }
+    }
+  ]
+}

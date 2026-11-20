@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json.schemastore.org/mcp-config.json",
+  "description": "Configuração de exemplo do servidor MCP de documentação oficial da AWS para integração com agentes de IA no BIA Cloud Lab.",
+  "mcpServers": {
+    "aws-documentation-mcp": {
+      "command": "uvx",
+      "args": [
+        "awslabs.aws-documentation-mcp-server@latest"
+      ],
+      "env": {
+        "FASTMCP_LOG_LEVEL": "ERROR",
+        "AWS_DOCUMENTATION_PARTITION": "aws"
+      }
+    }
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "modelId": "anthropic.claude-3-5-sonnet-20241022-v2:0",
+  "system": "Você é um Engenheiro Sênior de Confiabilidade de Sites (SRE) especializado em auditoria de telemetria e análise de risco para deployments Blue/Green no Amazon ECS. Sua função é emitir uma recomendação técnica fundamentada para autorização ou bloqueio de cutover de tráfego. Você atua estritamente em modo consultivo (read-only) com supervisão humana mandatória.",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Analise o payload de telemetria comparativa entre a versão de produção (Blue) e a nova versão em homologação (Green). Verifique discrepâncias de taxas de erro 5XX, anomalias de latência p95/p99, integridade dos hosts nos Target Groups e amostras de warnings/erros nos logs.\n\nRetorne obrigatoriamente um objeto JSON com o seguinte schema:\n{\n  \"status\": \"APPROVE\" | \"WAIT\" | \"REJECT\",\n  \"confidenceScore\": 0-100,\n  \"riskLevel\": \"LOW\" | \"MEDIUM\" | \"HIGH\",\n  \"metricsSummary\": {\n    \"latencyComparison\": \"string\",\n    \"errorRateComparison\": \"string\",\n    \"healthStatus\": \"string\"\n  },\n  \"detectedAnomalies\": [\"string\"],\n  \"recommendation\": \"string\",\n  \"humanReviewRequired\": true\n}\n\nPayload de telemetria:\n${TELEMETRY_PAYLOAD_JSON}"
+    }
+  ],
+  "inferenceConfig": {
+    "temperature": 0.1,
+    "maxTokens": 1000
+  }
+}
