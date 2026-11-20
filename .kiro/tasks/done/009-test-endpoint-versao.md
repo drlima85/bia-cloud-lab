@@ -415,7 +415,7 @@ npm test -- --coverage
 ### Documentação
 - [Jest Documentation](https://jestjs.io/)
 - [Jest Mocking](https://jestjs.io/docs/mock-functions)
-- [Worktree Workflow](.kiro/docs/worktree-workflow.md)
+- [Worktree Workflow](../../docs/worktree-workflow.md)
 
 ---
 

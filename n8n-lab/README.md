@@ -1,5 +1,12 @@
 # Desafio 6 — N8N Queue Mode na AWS com Amazon ElastiCache Valkey
 
+> [!NOTE]
+> **Documentação do laboratório n8n**
+>
+> Este diretório preserva o histórico técnico de implementação, diagnóstico e testes do laboratório.
+>
+> Para consultar a documentação consolidada dos Desafios 5 e 6, incluindo Single Mode, Queue Mode, arquitetura e IAM, acesse a [trilha n8n do portfólio](../DESAFIOS/03-bia-cloud-n8n/README.md).
+
 **Projeto:** BIA Cloud Lab AWS  
 **Módulo:** Desafio 6 — Orquestração Escalável de N8N em Fila Distribuída  
 **Região AWS:** `us-east-2` (Ohio)  

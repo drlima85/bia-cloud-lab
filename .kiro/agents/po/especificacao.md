@@ -320,9 +320,9 @@ git branch -d feature/XXX-tipo-resumo
 Sempre adicione ao final da task:
 ```markdown
 ## 📚 Referências
-- [Worktree Workflow](.kiro/docs/worktree-workflow.md)
-- [Worktree Steering](.kiro/docs/worktree-steering.md)
-- [Task Template](.kiro/docs/task-template-with-worktree.md)
+- [Worktree Workflow](../../docs/worktree-workflow.md)
+- [Worktree Steering](../../docs/worktree-steering.md)
+- [Task Template](../../docs/task-template-with-worktree.md)
 ```
 
 ## Template Completo

@@ -213,5 +213,5 @@ git branch -d feature/XXX-tipo-resumo
 ---
 
 ## 📚 Referências
-- [Worktree Workflow](.kiro/docs/worktree-workflow.md)
-- [Worktree Steering](.kiro/docs/worktree-steering.md)
+- [Worktree Workflow](worktree-workflow.md)
+- [Worktree Steering](worktree-steering.md)

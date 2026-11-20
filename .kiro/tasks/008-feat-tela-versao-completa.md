@@ -300,9 +300,9 @@ import VersionPage from "./components/VersionPage.jsx";
 - **Route:** `api/routes/versao.js`
 
 ### Workflow
-- [Worktree Workflow](.kiro/docs/worktree-workflow.md)
-- [Worktree Steering](.kiro/docs/worktree-steering.md)
-- [Task Template](.kiro/docs/task-template-with-worktree.md)
+- [Worktree Workflow](../docs/worktree-workflow.md)
+- [Worktree Steering](../docs/worktree-steering.md)
+- [Task Template](../docs/task-template-with-worktree.md)
 
 ---
 

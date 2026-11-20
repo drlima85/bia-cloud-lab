@@ -358,8 +358,8 @@ const chartData = [
 - [Recharts Documentation](https://recharts.org/)
 - [Tailwind CSS Docs](https://tailwindcss.com/docs)
 - [React Router v6](https://reactrouter.com/)
-- [Worktree Workflow](.kiro/docs/worktree-workflow.md)
-- [Worktree Steering](.kiro/docs/worktree-steering.md)
+- [Worktree Workflow](../../docs/worktree-workflow.md)
+- [Worktree Steering](../../docs/worktree-steering.md)
 
 ---
 

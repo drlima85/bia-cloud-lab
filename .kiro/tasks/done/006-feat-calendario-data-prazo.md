@@ -192,8 +192,8 @@ const formatDateToString = (date) => {
 
 - [React DatePicker Docs](https://reactdatepicker.com/)
 - [Localização pt-BR do date-fns](https://date-fns.org/v2.29.3/docs/Locale)
-- [Worktree Workflow](.kiro/docs/worktree-workflow.md)
-- [Worktree Steering](.kiro/docs/worktree-steering.md)
+- [Worktree Workflow](../../docs/worktree-workflow.md)
+- [Worktree Steering](../../docs/worktree-steering.md)
 
 ---
 
