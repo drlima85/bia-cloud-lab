@@ -78,7 +78,7 @@ const AddTask = ({ onAdd }) => {
       </div>
       
       <button type="submit" className="btn btn-block purple">
-        Add New Task
+        Adicione uma tarefa
       </button>
       
       <Modal
