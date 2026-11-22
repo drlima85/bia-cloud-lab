@@ -1,0 +1,16 @@
+# ==============================================================================
+# .gitignore — Regras de Isolamento Local da Trilha 04
+# ==============================================================================
+
+# Arquivos de ambiente e segredos locais
+.env
+.env.*
+!.env.example
+
+# Logs locais e arquivos temporários de execução
+*.log
+*.tmp
+*.bak
+
+# Scratch de testes locais
+scratch/

@@ -1,6 +1,6 @@
 # Architecture Decision Records (ADRs) — Estratégias de Deploy & Resiliência
 
-Este documento registra as decisões formais de arquitetura adotadas na Trilha 5, registrando contexto, alternativas, justificativas e consequências técnicas.
+Este documento registra as decisões formais de arquitetura adotadas na Trilha 4 (`04-deploy-strategies`), registrando contexto, alternativas, justificativas e consequências técnicas.
 
 ---
 
@@ -28,12 +28,12 @@ Este documento registra as decisões formais de arquitetura adotadas na Trilha 5
 
 ### ADR 02: Ativação de ECS Deployment Circuit Breaker com Rollback Automático
 
-- **Status:** Aprovado / Modelado em Templates
+- **Status:** Aprovado / Homologado na Nuvem Real (Fase 2)
 - **Contexto:** Releases defeituosos podem falhar consecutivamente na inicialização, causando degradação ou estado indefinido caso o operador humano não intervenha a tempo.
-- **Decisão:** Ativar `deploymentCircuitBreaker: { enable: true, rollback: true }`.
+- **Decisão:** Ativar `deploymentCircuitBreaker: { enable: true, rollback: true }` no serviço ECS.
 - **Consequências:**
-  - *Positivas:* O próprio control plane do ECS detecta após 3 falhas de container e reverte o serviço para a versão anterior estável sem necessidade de intervenção humana.
-  - *Negativas:* O tempo de reação é atrelado ao threshold de falhas consecutivas, dependendo da velocidade de reinício dos containers.
+  - *Positivas:* O próprio control plane do ECS detecta falhas sistemáticas de contêiner e reverte autonomamente para a versão estável anterior sem intervenção humana. Na homologação empírica (Fase 2), o limiar de 3 falhas consecutivas da Revisão `:16` foi capturado com precisão matemática, acionando o auto-rollback transparente para a Revisão `:15` com zero downtime observado durante o monitoramento.
+  - *Negativas:* O tempo de reação é atrelado ao threshold de falhas consecutivas ($\min(200, \max(3, \lceil \text{desiredCount} \times 0.5 \rceil))$), exigindo que a tarefa v1 permaneça íntegra durante a tentativa de subida da v2.
 
 ---
 

@@ -1,17 +1,25 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# Script Parametrizado de Checagem Contínua de Disponibilidade e Latência
-# Trilha: Estratégias de Deploy & Resiliência
+# check-availability.sh — Monitoramento Contínuo de Disponibilidade e Latência
+# Projeto: BIA Cloud Lab — Formação AWS / D2NS
+# Trilha: Estratégias de Deploy & Resiliência (Desafio 02)
 # ==============================================================================
 # Uso:
-#   ./check-availability.sh -u <URL> [OPTIONS]
+#   ./check-availability.sh [-E app|alb] [-u <URL>] [-i 2] [-c 10]
 # ==============================================================================
 
 set -euo pipefail
 
-TARGET_URL="${TARGET_URL:-http://localhost:8080/api/versao}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [[ -f "$SCRIPT_DIR/common.sh" ]]; then
+  # shellcheck source=./common.sh
+  source "$SCRIPT_DIR/common.sh"
+fi
+
+DEFAULT_ALB_URL="${ALB_URL:-http://localhost:8080/api/versao}"
+TARGET_URL="${TARGET_URL:-$DEFAULT_ALB_URL}"
 INTERVAL_SECONDS="${INTERVAL_SECONDS:-2}"
-MAX_REQUESTS="${MAX_REQUESTS:-0}" # 0 = infinito até Ctrl+C
+MAX_REQUESTS="${MAX_REQUESTS:-0}" # 0 = contínuo até Ctrl+C
 TIMEOUT_SECONDS=5
 
 TOTAL_REQ=0
@@ -23,28 +31,46 @@ TOTAL_TIME_MS=0
 
 show_help() {
   cat << EOF
-Uso: $(basename "$0") [OPÇÕES]
+$(basename "$0") — Monitoramento Contínuo de Disponibilidade HTTP e Latência
 
-Opções:
-  -u, --url URL               URL alvo para monitoramento (padrão: $TARGET_URL)
+USO:
+  $(basename "$0") [OPÇÕES]
+
+OPÇÕES:
+  -E, --env NOME              Ambiente alvo [app | alb | didatico] (padrão: ${TARGET_ENV:-app})
+  -u, --url URL               URL alvo para monitoramento (padrão: $DEFAULT_ALB_URL)
   -i, --interval SECONDS      Intervalo entre requisições em segundos (padrão: $INTERVAL_SECONDS)
   -c, --count NUM             Número máximo de requisições a enviar (0 = contínuo)
-  -t, --timeout SECONDS       Timeout por requisição (padrão: $TIMEOUT_SECONDS)
+  -t, --timeout SECONDS       Timeout por requisição em segundos (padrão: $TIMEOUT_SECONDS)
   -h, --help                  Exibe esta mensagem de ajuda
 
-Exemplo:
-  ./check-availability.sh -u http://alb-bia-123456789.us-east-1.elb.amazonaws.com/api/versao -i 1
+EXEMPLO:
+  # Monitorar o ambiente principal (app):
+  $(basename "$0") -i 1
+
+  # Monitorar o ambiente secundário (alb):
+  $(basename "$0") -E alb -i 1
+
+  # Enviar exatamente 10 requisições para validação rápida:
+  $(basename "$0") -c 10
 EOF
 }
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
+    -E|--env)
+      if declare -f load_environment >/dev/null; then
+        load_environment "$2"
+        TARGET_URL="$ALB_URL"
+      fi
+      shift 2
+      ;;
     -u|--url) TARGET_URL="$2"; shift 2 ;;
     -i|--interval) INTERVAL_SECONDS="$2"; shift 2 ;;
     -c|--count) MAX_REQUESTS="$2"; shift 2 ;;
     -t|--timeout) TIMEOUT_SECONDS="$2"; shift 2 ;;
     -h|--help) show_help; exit 0 ;;
-    *) echo "Opção desconhecida: $1" >&2; show_help; exit 1 ;;
+    *) echo "[ERROR] Opção desconhecida: $1" >&2; show_help; exit 1 ;;
   esac
 done
 

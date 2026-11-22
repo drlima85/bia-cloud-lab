@@ -1,31 +1,31 @@
 {
-  "family": "task-def-bia",
+  "family": "task-def-bia-cloud-app",
   "networkMode": "awsvpc",
   "requiresCompatibilities": [
-    "FARGATE",
     "EC2"
   ],
-  "cpu": "512",
+  "cpu": "1024",
   "memory": "1024",
   "executionRoleArn": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/ecsTaskExecutionRole",
-  "taskRoleArn": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/ecsTaskRole",
   "containerDefinitions": [
     {
       "name": "bia-cloud-app",
-      "image": "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/bia:simulated-fail",
+      "image": "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/bia-cloud-lab:${IMAGE_TAG}",
       "cpu": 512,
       "memory": 1024,
+      "memoryReservation": 512,
       "essential": true,
       "command": [
         "sh",
         "-c",
-        "echo '[SIMULACAO] Falha crítica de inicialização provocada para teste de Circuit Breaker' && exit 1"
+        "echo '[SIMULACAO] Falha critica de inicializacao provocada para teste de Circuit Breaker' && exit 1"
       ],
       "portMappings": [
         {
           "containerPort": 8080,
           "hostPort": 8080,
           "protocol": "tcp",
+          "name": "porta-8080",
           "appProtocol": "http"
         }
       ],
@@ -37,6 +37,30 @@
         {
           "name": "DB_HOST",
           "value": "${DB_HOST}"
+        },
+        {
+          "name": "DB_PORT",
+          "value": "5432"
+        },
+        {
+          "name": "DB_USER",
+          "value": "postgres"
+        },
+        {
+          "name": "CACHE_ENDPOINT",
+          "value": "${CACHE_ENDPOINT}"
+        },
+        {
+          "name": "CACHE_PORT",
+          "value": "6379"
+        },
+        {
+          "name": "CACHE_TLS",
+          "value": "true"
+        },
+        {
+          "name": "CACHE_TTL",
+          "value": "30"
         },
         {
           "name": "SIMULATE_FAILURE",
@@ -52,7 +76,7 @@
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
-          "awslogs-group": "/ecs/task-def-bia",
+          "awslogs-group": "/ecs/task-def-bia-cloud-app",
           "awslogs-region": "${AWS_REGION}",
           "awslogs-stream-prefix": "ecs-fail-test",
           "awslogs-create-group": "true"

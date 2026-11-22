@@ -1,10 +1,9 @@
 {
-  "cluster": "cluster-bia",
-  "serviceName": "service-bia",
-  "taskDefinition": "task-def-bia",
-  "desiredCount": 2,
-  "launchType": "FARGATE",
-  "platformVersion": "LATEST",
+  "cluster": "cluster-bia-app",
+  "serviceName": "service-bia-cloud-app",
+  "taskDefinition": "task-def-bia-cloud-app",
+  "desiredCount": 1,
+  "launchType": "EC2",
   "networkConfiguration": {
     "awsvpcConfiguration": {
       "subnets": [
@@ -19,7 +18,7 @@
   },
   "loadBalancers": [
     {
-      "targetGroupArn": "arn:aws:elasticloadbalancing:${AWS_REGION}:${AWS_ACCOUNT_ID}:targetgroup/${TARGET_GROUP_NAME}/${TARGET_GROUP_ID}",
+      "targetGroupArn": "arn:aws:elasticloadbalancing:${AWS_REGION}:${AWS_ACCOUNT_ID}:targetgroup/tg-bia-app/${TARGET_GROUP_ID}",
       "containerName": "bia-cloud-app",
       "containerPort": 8080
     }

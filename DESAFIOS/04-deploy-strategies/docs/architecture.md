@@ -57,7 +57,7 @@ graph TD
 | **Tempo de Recuperação** | Minutos (tempo de registrar task-def anterior e aguardar drain). | Médio (após 3 falhas de container, reverte de forma autônoma). | Quase imediato na camada de rede (tempo de propagação da API ALB). | Rápido (comutação imediata de tráfego de volta ao Blue). | Consultivo (depende da confirmação do operador humano). |
 | **Impacto na Capacidade** | $+100\%$ temporário (`maximumPercent: 200`). | $+100\%$ temporário (`maximumPercent: 200`). | $+100\%$ constante até desligar o serviço Blue. | $+100\%$ temporário durante o `terminationWaitTime`. | $+100\%$ temporário durante janela de auditoria da IA. |
 | **Complexidade Operacional** | Baixa. | Baixa/Média. | Média (gestão de 2 serviços). | Alta (CodeDeploy + AppSpec + IAM). | Muito Alta (Pipelines + Bedrock + Guardrails). |
-| **Status no Laboratório** | ✅ Implementado em código. | 🟡 Parcialmente implementado. | 🟡 Vivenciado em treinamento guiado. | ⚪ Modelado em templates. | ⚪ Arquitetura proposta. |
+| **Status no Laboratório** | ✅ Implementado em código. | 🟢 Homologado na Nuvem (Fase 2) / Em Repouso. | 🟡 Vivenciado em treinamento guiado. | ⚪ Modelado em templates. | ⚪ Arquitetura proposta. |
 
 ---
 

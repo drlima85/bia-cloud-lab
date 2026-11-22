@@ -21,7 +21,7 @@ Em aderência às boas práticas de governança técnica, os artefatos desta tri
 
 | Dimensão | Situação | Detalhamento |
 |---|:---:|---|
-| **Funcionalidade em Código** | ✅ Implementada | Automação completa no script [deploy-ecs.sh](../../../deploy-ecs.sh), suportando geração de tags baseadas em commit hash Git, push ao Amazon ECR, criação de nova revisão de Task Definition e chamada de atualização do serviço no ECS. Versão compacta também presente em [scripts/ecs/unix/deploy.sh](../../../scripts/ecs/unix/deploy.sh). |
+| **Funcionalidade em Código** | ✅ Implementada | Automação completa no script [deploy-ecs.sh](../scripts/deploy-ecs.sh), suportando geração de tags baseadas em commit hash Git, push ao Amazon ECR, criação de nova revisão de Task Definition e chamada de atualização do serviço no ECS. |
 | **Execução Histórica** | ✅ Documentada | Execuções realizadas no contexto dos laboratórios da Formação AWS e do desenvolvimento do BIA Cloud Lab, com acompanhamento das transições de status das tarefas e espera de estabilização via `aws ecs wait services-stable`. |
 | **Testes Comprovados** | 🟡 Parcial | Validação funcional da substituição sequencial de tasks no cluster ECS e resposta HTTP 200 no endpoint de checagem. |
 | **Validações Pendentes** | ⚪ Planejada | **Zero Downtime formalmente comprovado sob carga:** Execução de testes de carga contínua (ex: Locust, k6 ou JMeter) durante a janela de transição de tarefas para certificar ausência absoluta de erros HTTP 502/503/504 ou desconexões TCP. *A mera existência de scripts de deploy e contêineres de checagem não constitui prova empírica de zero downtime.* |
@@ -115,7 +115,7 @@ Quando o ECS decide descomissionar uma tarefa antiga (v1):
 
 ### 1. Script Principal: `deploy-ecs.sh`
 
-Localizado em [deploy-ecs.sh](../../../deploy-ecs.sh), este script orquestra o pipeline local:
+Localizado em [deploy-ecs.sh](../scripts/deploy-ecs.sh), este script orquestra o pipeline local:
 
 ```bash
 # Execução padrão (captura git commit hash, faz build, push e update do serviço)
@@ -132,11 +132,11 @@ Localizado em [deploy-ecs.sh](../../../deploy-ecs.sh), este script orquestra o p
 
 ### 2. Utilitário de Monitoramento de Disponibilidade
 
-O repositório possui uma imagem utilitária documentada em [Dockerfile_checkdisponibilidade](../../../Dockerfile_checkdisponibilidade) e script correspondente em [scripts/ecs/unix/check-disponibilidade.sh](../../../scripts/ecs/unix/check-disponibilidade.sh):
+A trilha disponibiliza o script especializado de telemetria contínua em [check-availability.sh](../scripts/check-availability.sh) (evolução dos utilitários legados de checagem do laboratório):
 
 ```bash
-# Executa checagem contínua via container Alpine com curl
-./scripts/ecs/unix/check-disponibilidade.sh
+# Executa checagem contínua via curl com medição de latência e sumário
+./scripts/check-availability.sh -i 2
 ```
 
 O contêiner emite a cada 5 segundos:
