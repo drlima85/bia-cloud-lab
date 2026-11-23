@@ -57,7 +57,7 @@ O ambiente do laboratório encontra-se em **estado de repouso planejado (standby
 | **Deployment Strategy** | `ROLLING` | Padrão rolling update nativo do ECS |
 | **Target Group Vinculado** | `arn:aws:elasticloadbalancing:us-east-2:123456789012:targetgroup/tg-bia-app/b17888eb84ac5c03` | Porta 8080 do contêiner `bia-cloud-app` |
 | **Subnets Configuradas** | `subnet-0c9a226c460d77c8f`, `subnet-0aef2d36da47e89e9` | Subnets em us-east-2b e us-east-2a |
-| **Security Groups** | `sg-049145e1b9577f094` (`bia-app`) | Permite tráfego originado no ALB (`sg-03ad2517f8e3a1a5f`) |
+| **Security Groups** | `bia-app` | Permite tráfego originado no Security Group do ALB (`bia-alb`) |
 | **Health Check Grace Period** | `0` segundos | Recomendado parametrizar `60` segundos |
 | **Enable Execute Command** | `false` | Acesso interativo desativado |
 
@@ -82,7 +82,7 @@ Famílias e revisões ativas encontradas na conta:
 - **Execution Role:** `arn:aws:iam::123456789012:role/ecsTaskExecutionRole`
 - **Task Role:** Não configurada
 - **Container Name:** `bia-cloud-app`
-- **Imagem:** `123456789012.dkr.ecr.us-east-2.amazonaws.com/bia-cloud-lab@sha256:65cecfbdb09835fc5c7206a9cb850044579f74b4cb38335366f02922479b63e2` (tag `elasticache-v2`)
+- **Imagem:** `123456789012.dkr.ecr.us-east-2.amazonaws.com/bia-cloud-lab:elasticache-v2`
 - **Port Mapping:** Host 8080 $\to$ Container 8080 (TCP, HTTP)
 - **Log Driver:** `awslogs` apontando para `/ecs/task-def-bia-cloud-app` na região `us-east-2`
 
@@ -131,7 +131,7 @@ Famílias e revisões ativas encontradas na conta:
 | **AMI ID** | `ami-030831d5502ebf96d` (Amazon Linux 2023 ECS-optimized x86_64) |
 | **Instance Type** | `t3.small` |
 | **IAM Instance Profile** | `arn:aws:iam::123456789012:instance-profile/ecsInstanceRole` |
-| **Security Groups** | `sg-0f7f2a9a532e3130c` (`bia-cluster`) |
+| **Security Groups** | `bia-cluster` |
 | **User Data (Decodificado)** | `#!/bin/bash \necho ECS_CLUSTER=cluster-bia-app >> /etc/ecs/ecs.config;` |
 | **Status de Verificação via CLI** | ✅ **Comprovado com Sucesso** (Permissões de leitura liberadas e auditadas) |
 
@@ -139,12 +139,12 @@ Famílias e revisões ativas encontradas na conta:
 
 ## 🌐 4. EC2, Application Load Balancer & Target Groups
 
-### 4.1. Instâncias EC2
+### 4.1. Instâncias EC2 do Cluster ECS
 
-| Instance ID | Tag Name | Tipo | Subnet | Status | Observação |
+| Instance ID | Papel / Função | Tipo | Subnet / AZ | Status Operacional | Observação |
 |---|---|---|---|---|---|
-| `i-0776928a1b2220f48` | `bia-cloud-dev` | `t3.micro` | `subnet-0c9a226c460d77c8f` (AZ 2b) | `stopped` | Instância isolada de desenvolvimento (não faz parte do cluster ECS) |
-| *Instâncias do ECS Cluster* | - | - | - | `0 ativas` | Nenhuma instância EC2 do ASG em execução |
+| `i-082efe6b1acd844a1` | Container Instance do Cluster | `t3.small` | `subnet-0aef2d36da47e89e9` (AZ 2a) | `InService` / Ativa no teste | Instância gerenciada pelo ASG para hospedar tarefas do serviço ECS |
+| `i-0c1271a67f553628a` | Container Instance do Cluster | `t3.small` | `subnet-0c9a226c460d77c8f` (AZ 2b) | `InService` / Ativa no teste | Instância gerenciada pelo ASG para hospedar tarefas do serviço ECS |
 
 ### 4.2. Application Load Balancer (ALB)
 
@@ -157,7 +157,7 @@ Famílias e revisões ativas encontradas na conta:
 | **Scheme** | `internet-facing` |
 | **VPC** | `vpc-093b15ec114bc9eb2` |
 | **Zonas de Disponibilidade** | `us-east-2a` (`subnet-0aef2d36da47e89e9`), `us-east-2b` (`subnet-0c9a226c460d77c8f`) |
-| **Security Group do ALB** | `sg-03ad2517f8e3a1a5f` |
+| **Security Group do ALB** | `bia-alb` |
 
 ### 4.3. Target Groups do ALB
 
@@ -193,15 +193,14 @@ Famílias e revisões ativas encontradas na conta:
 
 ### 5.2. Security Groups Relevantes
 
-| Security Group ID | Group Name | Finalidade Arquitetural | Regras de Inbound Relevantes |
-|---|---|---|---|
-| `sg-03ad2517f8e3a1a5f` | `bia-alb` | Entrada externa do ALB | Portas 80 e 443 liberadas para internet (`0.0.0.0/0`) |
-| `sg-049145e1b9577f094` | `bia-app` | Tarefas ECS (`awsvpc`) | Permite portas TCP 0-65535 originadas de `sg-03ad2517f8e3a1a5f` (`bia-alb`) |
-| `sg-0f7f2a9a532e3130c` | `bia-cluster` | Instâncias EC2 do ASG | Tráfego de gerenciamento do cluster |
-| `sg-0d7d4e27173a72d64` | *RDS SG* | Banco PostgreSQL RDS | Permite porta 5432 vinda de instâncias e tarefas BIA |
-| `sg-001148704955e1b93` | `bia-cache` | Cache ElastiCache / Valkey | Permite porta 6379 originada de `bia-app` e `bia-dev` |
-| `sg-0be00b55d85ae4952` | `bia-dev` | Instância de desenvolvimento | Portas 3001 e 3002 abertas |
-| `sg-051bcf65c92241f98` | `default` | Grupo padrão da VPC | Portas 8080 e 6379 com acessos locais cruzados |
+| Grupo de Segurança | Finalidade Arquitetural | Regras de Inbound Relevantes |
+|---|---|---|
+| `bia-alb` | Entrada externa do ALB | Portas 80 e 443 liberadas para internet (`0.0.0.0/0`) |
+| `bia-app` | Tarefas ECS (`awsvpc`) | Permite portas TCP da aplicação originadas de `bia-alb` |
+| `bia-cluster` | Instâncias EC2 do ASG | Tráfego de gerenciamento do cluster ECS |
+| `rds-sg` (*RDS SG*) | Banco PostgreSQL RDS | Permite porta 5432 vinda de instâncias e tarefas BIA |
+| `bia-cache` | Cache ElastiCache / Valkey | Permite porta 6379 originada de `bia-app` |
+| `default` | Grupo padrão da VPC | Portas 8080 e 6379 com acessos locais cruzados |
 
 ---
 
@@ -241,11 +240,11 @@ Famílias e revisões ativas encontradas na conta:
 
 - **Repositório:** `bia-cloud-lab`
 - **URI:** `123456789012.dkr.ecr.us-east-2.amazonaws.com/bia-cloud-lab`
-- **Tags Disponíveis e Verificadas:**
-  - `rolling-purple-v1` (Digest: `sha256:cb65181c...`, enviada em 16/11/2026)
-  - `elasticache-v2` (Digest: `sha256:65cecfbd...`, enviada em 03/11/2026)
-  - `elasticache-v1` (Digest: `sha256:acf90d00...`, enviada em 03/11/2026)
-  - `4.2.0` (Digest: `sha256:27e2f85f...`, enviada em 02/11/2026)
+- **Tags Disponíveis:**
+  - `elasticache-v2` (imagem base da Task Definition `:15`)
+  - `rolling-purple-v1` (imagem alternativa para validação de alteração visual)
+  - `elasticache-v1`
+  - `4.2.0`
 
 ### 6.4. AWS Systems Manager Parameter Store
 
@@ -268,7 +267,7 @@ Famílias e revisões ativas encontradas na conta:
   - ARN: `arn:aws:iam::123456789012:role/ecsTaskExecutionRole`
   - Trust Policy: `ecs-tasks.amazonaws.com`
   - Utilizada pelo ECS Agent para pull de imagens no ECR e envio de logs ao CloudWatch.
-- **`role-acesso-ssm`:**
-  - ARN: `arn:aws:iam::123456789012:role/role-acesso-ssm`
+- **`ecsInstanceRole`:**
+  - ARN: `arn:aws:iam::123456789012:role/ecsInstanceRole`
   - Trust Policy: `ec2.amazonaws.com`
-  - Utilizada pela instância `bia-cloud-dev` para acesso ao SSM Session Manager.
+  - Utilizada pelas instâncias EC2 do Auto Scaling Group para registro de nós no cluster ECS e comunicação com o plano de controle.

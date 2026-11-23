@@ -110,6 +110,23 @@ aws ecs update-service --cluster cluster-bia-app --service service-bia-cloud-app
 aws autoscaling update-auto-scaling-group --auto-scaling-group-name Infra-ECS-Cluster-cluster-bia-app-0495f372-ECSAutoScalingGroup-5MzfS0ZZ7Q8j --min-size 0 --max-size 0 --desired-capacity 0 --profile agy-aws-lab --region us-east-2
 ```
 
+### 3.4. Governança de Imagens ECR (`--skip-build` e `-t`)
+
+Para acelerar os deploys no laboratório e evitar compilações locais desnecessárias, os scripts suportam a reutilização de imagens pré-existentes no Amazon ECR:
+
+* **Significado de `--skip-build` e `-t <TAG>`:**
+  - `--skip-build`: Inibe as etapas locais de `docker build` e `docker push`, buscando a imagem diretamente no repositório ECR.
+  - `-t <TAG>`: Especifica a tag mandatória da imagem remota a ser referenciada na nova Task Definition gerada.
+* **Relação de `elasticache-v2` com a Baseline :15:**
+  - É a imagem estável de referência homologada na Revisão `:15`. Utilizá-la permite validar a substituição saudável de tarefas e o comportamento dos scripts com segurança funcional, sem alterar a interface web.
+* **Alternativa `rolling-purple-v1`:**
+  - Imagem funcional com cabeçalho roxo (oriunda do Desafio 01), recomendada caso se deseje comprovar visualmente a alternância de versões no navegador sem compilar Docker localmente.
+
+**Exemplo Funcional de Deploy Rápido:**
+```bash
+./scripts/deploy-ecs.sh deploy --skip-build -t elasticache-v2
+```
+
 ---
 
 ## 🏗️ 4. Dimensionamento do Cluster: Por que 2 instâncias `t3.small`?
